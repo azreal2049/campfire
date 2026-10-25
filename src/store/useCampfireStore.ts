@@ -304,10 +304,10 @@ const FUEL_SECONDS = 15 * 60
 export const useCampfireStore = create<CampfireStore>((set, get) => ({
   rooms: buildDefaultRooms(),
   activeRoomId: 'room_python_dsa',
-  activePage: 'page-1',
+  activePage: 'page-signin',
   isCreateModalOpen: false,
   profile: {
-    displayName: 'You', username: 'you', pronouns: '', bio: '',
+    displayName: 'You', username: 'you', role: 'developer', pronouns: '', bio: '',
     customStatus: '', avatarInitials: 'YO', avatarColor: AVATAR_COLORS[2],
     status: 'online', muted: false, deafened: false, brownNoise: false,
     screenSharing: false, screenStream: null, simulatedStream: false, aiBaseUrl: 'http://127.0.0.1:31415/v1/chat/completions', aiModel: 'auto',

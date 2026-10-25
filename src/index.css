@@ -14,9 +14,9 @@ body,
 
 body {
   min-height: 100vh;
-  background: #0b0b0c;
+  background: #070709;
   color: #fff;
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: "SF Pro Display", "SF Pro Text", -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 

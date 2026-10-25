@@ -1,46 +1,31 @@
 import { useEffect } from 'react'
-import { Page1 } from './pages/Page1'
+import { PageSignIn } from './pages/PageSignIn'
 import { startCampfireTicker, useCampfireStore } from './store/useCampfireStore'
-import type { PageSlot } from './types/campfire'
-
-const PAGE_SLOTS: readonly PageSlot[] = ['page-1']
 
 export default function App() {
   const activePage = useCampfireStore((state) => state.activePage)
-  const setActivePage = useCampfireStore((state) => state.setActivePage)
+  const displayName = useCampfireStore((state) => state.profile.displayName)
+  const role = useCampfireStore((state) => state.profile.role)
 
   useEffect(() => {
     startCampfireTicker()
   }, [])
 
-  const selectedPage = PAGE_SLOTS.find((page) => page === activePage)
-
   return (
-    <main className="relative flex min-h-full items-center justify-center bg-[#0b0b0c] px-6 text-center text-white">
-      {selectedPage === 'page-1' ? (
-        <Page1 />
-      ) : (
-        <p className="text-sm text-white/60">{activePage} is not available yet.</p>
-      )}
-
-      <label className="fixed bottom-5 right-5 flex items-center gap-2 rounded-full border border-white/10 bg-black/80 px-3 py-2 text-xs text-white/70 shadow-lg backdrop-blur">
-        <span>Page</span>
-        <select
-          aria-label="Active page"
-          className="cursor-pointer bg-transparent text-white outline-none"
-          value={activePage}
-          onChange={(event) => {
-            const page = PAGE_SLOTS.find((slot) => slot === event.target.value)
-            if (page) setActivePage(page)
-          }}
-        >
-          {PAGE_SLOTS.map((page) => (
-            <option key={page} value={page} className="bg-[#0b0b0c]">
-              {page.replace('-', ' ')}
-            </option>
-          ))}
-        </select>
-      </label>
+    <main className="min-h-screen bg-[#070709] text-[#F4F4F6]">
+      {activePage === 'page-signin' ? (
+        <PageSignIn />
+      ) : activePage === 'page-lobby' ? (
+        <section className="relative isolate flex min-h-screen items-center justify-center overflow-hidden px-6 text-center before:absolute before:inset-0 before:-z-10 before:bg-[radial-gradient(ellipse_at_50%_45%,rgba(255,255,255,0.07),transparent_52%)]">
+          <div className="w-full max-w-md rounded-[28px] border border-white/[0.08] bg-[#0B0B0E]/85 p-10 shadow-[0_24px_80px_rgba(0,0,0,0.85),inset_0_1px_0_0_rgba(255,255,255,0.08)] backdrop-blur-2xl">
+            <p className="text-3xl" aria-hidden="true">🔥</p>
+            <h1 className="mt-5 text-2xl font-semibold tracking-tight">Welcome to Campfire</h1>
+            <p className="mt-3 text-sm text-[#71717A]">
+              You’re in as {displayName} · {role === 'developer' ? 'Developer' : 'Student'}
+            </p>
+          </div>
+        </section>
+      ) : null}
     </main>
   )
 }

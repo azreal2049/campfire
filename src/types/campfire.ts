@@ -4,11 +4,13 @@ export type TimerMode = 'countdown' | 'deadman' | 'pomodoro'
 /** Tabs available inside the Supply Dock. */
 export type SupplyTab = 'dev-rig' | 'solvely' | 'whiteboard' | 'scratchpad' | 'pinned-links' | 'live-stage'
 export type UserStatus = 'online' | 'idle' | 'dnd' | 'invisible'
+export type CampfireRole = 'developer' | 'student'
 export type RoomCategory = 'DSA & Coding' | 'Chem & Bio' | 'Music & Beats' | 'General Grind'
 
 export interface CampfireProfile {
   displayName: string
   username: string
+  role: CampfireRole
   pronouns: string
   bio: string
   customStatus: string
@@ -150,7 +152,7 @@ export interface CreateCampfireInput {
   durationMinutes: number
 }
 
-export type PageSlot = `page-${number}`
+export type PageSlot = `page-${number}` | 'page-signin' | 'page-lobby'
 
 export interface CampfireStore {
   rooms: CampfireRoom[]
