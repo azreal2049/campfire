@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { useCampfireStore } from '../../store/useCampfireStore'
-import type { SolverLesson, WhiteboardMark } from '../../types/campfire'
+import { useCampfireStore } from '../../../store/useCampfireStore'
+import type { SolverLesson, WhiteboardMark } from '../../../types/campfire'
 
 type Tool = WhiteboardMark['tool']
 type BoardBackground = 'dot-grid' | 'graph' | 'obsidian'

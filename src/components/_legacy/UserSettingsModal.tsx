@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
-import { useCampfireStore } from '../store/useCampfireStore'
+import { useCampfireStore } from '../../store/useCampfireStore'
 
 const SECTIONS = ['My Account', 'User Profile', 'Voice & Audio', 'Soundscape Mixer', 'Appearance', 'AI Endpoint', 'Keybinds'] as const
 

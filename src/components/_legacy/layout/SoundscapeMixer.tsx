@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useCampfireStore } from '../../store/useCampfireStore'
+import { useCampfireStore } from '../../../store/useCampfireStore'
 
 type Track = 'noiseVolume' | 'rainVolume' | 'crackleVolume' | 'binauralVolume'
 type AudioContextWithSinkId = AudioContext & { setSinkId?: (deviceId: string) => Promise<void> }

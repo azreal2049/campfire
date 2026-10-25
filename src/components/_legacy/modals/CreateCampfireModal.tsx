@@ -1,8 +1,8 @@
 import { Flame, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { cn } from '../../lib/cn'
-import { useCampfireStore } from '../../store/useCampfireStore'
-import type { TimerMode } from '../../types/campfire'
+import { cn } from '../../../lib/cn'
+import { useCampfireStore } from '../../../store/useCampfireStore'
+import type { TimerMode } from '../../../types/campfire'
 
 const MODES: { id: TimerMode; label: string; blurb: string }[] = [
   {

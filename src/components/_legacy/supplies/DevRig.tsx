@@ -1,6 +1,6 @@
 import Editor from '@monaco-editor/react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { useCampfireStore } from '../../store/useCampfireStore'
+import { useCampfireStore } from '../../../store/useCampfireStore'
 
 type DrawerTab = 'terminal' | 'problems' | 'snapshots' | 'preview'
 function monotonicNow() { return performance.now() }

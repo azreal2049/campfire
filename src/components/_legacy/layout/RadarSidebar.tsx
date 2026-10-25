@@ -1,11 +1,11 @@
 import { Flame, Plus, Radio, Search, Settings, Mic, MicOff, Headphones, Volume2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { cn } from '../../lib/cn'
+import { cn } from '../../../lib/cn'
 import {
   formatTimer,
   useCampfireStore,
-} from '../../store/useCampfireStore'
-import type { TimerMode } from '../../types/campfire'
+} from '../../../store/useCampfireStore'
+import type { TimerMode } from '../../../types/campfire'
 import { UserSettingsModal } from '../UserSettingsModal'
 
 const MODE_LABEL: Record<TimerMode, string> = {

@@ -304,6 +304,7 @@ const FUEL_SECONDS = 15 * 60
 export const useCampfireStore = create<CampfireStore>((set, get) => ({
   rooms: buildDefaultRooms(),
   activeRoomId: 'room_python_dsa',
+  activePage: 'page-1',
   isCreateModalOpen: false,
   profile: {
     displayName: 'You', username: 'you', pronouns: '', bio: '',
@@ -317,6 +318,7 @@ export const useCampfireStore = create<CampfireStore>((set, get) => ({
     messageDensity: 'cozy', fontScale: 13,
   },
 
+  setActivePage: (page) => set({ activePage: page }),
   setActiveRoom: (roomId) => set({ activeRoomId: roomId }),
 
   openCreateModal: () => set({ isCreateModalOpen: true }),

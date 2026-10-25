@@ -150,11 +150,15 @@ export interface CreateCampfireInput {
   durationMinutes: number
 }
 
+export type PageSlot = `page-${number}`
+
 export interface CampfireStore {
   rooms: CampfireRoom[]
   activeRoomId: string | null
+  activePage: PageSlot
   isCreateModalOpen: boolean
   profile: CampfireProfile
+  setActivePage: (page: PageSlot) => void
   setActiveRoom: (roomId: string) => void
   openCreateModal: () => void
   closeCreateModal: () => void

@@ -1,6 +1,6 @@
 import { useRef, useState, type ChangeEvent, type DragEvent } from 'react'
-import { useCampfireStore } from '../../store/useCampfireStore'
-import type { QuizQuestion, SolverLesson } from '../../types/campfire'
+import { useCampfireStore } from '../../../store/useCampfireStore'
+import type { QuizQuestion, SolverLesson } from '../../../types/campfire'
 
 const SUBJECTS = ['Calculus & Math', 'Organic Chemistry', 'Physics (NEET/JEE)', 'Nutritional Biochem', 'DSA & Algorithms']
 const SAMPLES = ['Gravitational Potential of Solid Sphere', 'Carbocation Rearrangement & IUPAC Priority', 'Sliding Window Maximum O(n) Proof', 'Michaelis-Menten Enzyme Kinetics']

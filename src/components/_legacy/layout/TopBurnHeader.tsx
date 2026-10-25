@@ -1,7 +1,7 @@
 import { Flame, Fuel, Timer, Settings, UserPlus, X, Download } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { formatTimer, useCampfireStore } from '../../store/useCampfireStore'
-import type { RoomCategory, TimerMode } from '../../types/campfire'
+import { formatTimer, useCampfireStore } from '../../../store/useCampfireStore'
+import type { RoomCategory, TimerMode } from '../../../types/campfire'
 import { UserProfilePopover } from '../UserProfilePopover'
 
 const MODE_LABEL = {

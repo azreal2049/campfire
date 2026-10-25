@@ -9,8 +9,8 @@ import {
   Waves,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { cn } from '../../lib/cn'
-import { useCampfireStore } from '../../store/useCampfireStore'
+import { cn } from '../../../lib/cn'
+import { useCampfireStore } from '../../../store/useCampfireStore'
 import { UserProfilePopover } from '../UserProfilePopover'
 import { SoundscapeMixer } from './SoundscapeMixer'
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useCampfireStore } from '../store/useCampfireStore'
+import { useCampfireStore } from '../../store/useCampfireStore'
 
 export function UserProfilePopover({ name, color, onClose }: { name: string; color: string; onClose: () => void }) {
   const rooms = useCampfireStore((state) => state.rooms)

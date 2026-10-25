@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Pin, Reply, Send, Trash2, Users } from 'lucide-react'
-import { useCampfireStore } from '../../store/useCampfireStore'
+import { useCampfireStore } from '../../../store/useCampfireStore'
 import { UserProfilePopover } from '../UserProfilePopover'
 
 type SidebarTab = 'chat' | 'members' | 'pins'

@@ -15,9 +15,9 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { cn } from '../../lib/cn'
-import { useCampfireStore } from '../../store/useCampfireStore'
-import type { CodeLanguage, SupplyTab } from '../../types/campfire'
+import { cn } from '../../../lib/cn'
+import { useCampfireStore } from '../../../store/useCampfireStore'
+import type { CodeLanguage, SupplyTab } from '../../../types/campfire'
 import { DevRig } from './DevRig'
 import { Solvely } from './Solvely'
 import { Whiteboard } from './Whiteboard'
