@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { BlueprintStudio } from './components/BlueprintStudio'
 import { RadarSidebar } from './components/layout/RadarSidebar'
 import { TopBurnHeader } from './components/layout/TopBurnHeader'
 import { BottomVoiceDock } from './components/layout/BottomVoiceDock'
@@ -9,9 +10,31 @@ import { startCampfireTicker, useCampfireStore } from './store/useCampfireStore'
 
 export default function App() {
   const profile = useCampfireStore((state) => state.profile)
+  const [blueprintOpen, setBlueprintOpen] = useState(() => window.location.hash === '#blueprint')
+
   useEffect(() => {
     startCampfireTicker()
   }, [])
+
+  useEffect(() => {
+    const syncHash = () => setBlueprintOpen(window.location.hash === '#blueprint')
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'b') {
+        event.preventDefault()
+        window.location.hash = blueprintOpen ? '' : 'blueprint'
+      }
+    }
+    window.addEventListener('hashchange', syncHash)
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('hashchange', syncHash)
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [blueprintOpen])
+
+  if (blueprintOpen && window.location.hash === '#blueprint') {
+    return <BlueprintStudio />
+  }
 
   return (
     <>
