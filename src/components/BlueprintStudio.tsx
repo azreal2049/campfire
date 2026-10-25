@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
+import type { CSSProperties, DragEvent as ReactDragEvent, PointerEvent as ReactPointerEvent } from 'react'
 
 type Trigger = 'On Click' | 'On Hover' | 'On Timer 00:00' | 'On Keypress'
 type Action = 'Navigate to Screen' | 'Open Popup Modal' | 'Close Modal' | 'Switch Supply Tab' | 'Trigger State Action'
@@ -244,8 +244,8 @@ export function BlueprintStudio() {
     setData((current) => ({ ...current, screens: [...current.screens, screen] }))
     setSelection({ type: 'screen', id })
   }
-  const addElement = (kind: ElementKind) => {
-    const screen = selectedScreen ?? selectedElement?.screen ?? data.screens[0]
+  const addElement = (kind: ElementKind, targetScreenId?: string) => {
+    const screen = data.screens.find((entry) => entry.id === targetScreenId) ?? selectedScreen ?? selectedElement?.screen ?? data.screens[0]
     if (!screen) return
     const item = makeElement(screen.id, `New ${kind}`, 24, 24 + screen.items.length * 52, 220, 48, kind)
     setData((current) => ({ ...current, screens: current.screens.map((entry) => entry.id === screen.id ? { ...entry, items: [...entry.items, item] } : entry) }))
@@ -282,7 +282,7 @@ export function BlueprintStudio() {
       setMessage('No On Click flow connected')
       return
     }
-    setPrototypeScreen(flow.toId)
+    if (flow.action === 'Navigate to Screen' || flow.action === 'Open Popup Modal' || flow.action === 'Close Modal') setPrototypeScreen(flow.toId)
     setMessage(`${flow.action}: ${data.screens.find((screen) => screen.id === flow.toId)?.title ?? 'destination'}`)
   }
 
@@ -296,7 +296,7 @@ export function BlueprintStudio() {
     if (timerFlow) {
       timerFlowsRun.current.add(timerFlow.id)
       timer = window.setTimeout(() => {
-        setPrototypeScreen(timerFlow.toId)
+        if (timerFlow.action === 'Navigate to Screen' || timerFlow.action === 'Open Popup Modal' || timerFlow.action === 'Close Modal') setPrototypeScreen(timerFlow.toId)
         setMessage(`${timerFlow.action}: ${data.screens.find((screen) => screen.id === timerFlow.toId)?.title ?? 'destination'}`)
       }, 1000)
     }
@@ -304,7 +304,7 @@ export function BlueprintStudio() {
       if (event.key.length !== 1 && event.key !== 'Enter' && event.key !== ' ') return
       const flow = data.flows.find((entry) => activeElementIds.has(entry.fromId) && entry.trigger === 'On Keypress')
       if (flow) {
-        setPrototypeScreen(flow.toId)
+        if (flow.action === 'Navigate to Screen' || flow.action === 'Open Popup Modal' || flow.action === 'Close Modal') setPrototypeScreen(flow.toId)
         setMessage(`${flow.action}: ${data.screens.find((screen) => screen.id === flow.toId)?.title ?? 'destination'}`)
       }
     }
@@ -359,14 +359,25 @@ export function BlueprintStudio() {
         <aside className="z-10 flex w-[240px] shrink-0 flex-col gap-4 overflow-y-auto border-r border-white/10 bg-[#0b0c10] p-3">
           <div><div className="mb-2 text-[10px] font-semibold uppercase tracking-[.16em] text-white/45">Canvas</div><div className="flex items-center gap-2"><button className={btn} onClick={() => setZoom((value) => Math.min(1.5, value + .1))}>＋</button><span className="w-12 text-center font-mono text-[10px] text-white/60">{Math.round(zoom * 100)}%</span><button className={btn} onClick={() => setZoom((value) => Math.max(.3, value - .1))}>−</button><button className={btn} onClick={() => { setZoom(.78); setPan({ x: 0, y: 0 }) }}>Reset</button></div></div>
           <div><div className="mb-2 text-[10px] font-semibold uppercase tracking-[.16em] text-white/45">Add to canvas</div><div className="grid gap-1.5"><button className={`${btn} text-left`} onClick={() => addScreen()}>＋ Add New Screen Frame</button><button className={`${btn} text-left`} onClick={() => addScreen(true)}>＋ Add Popup Modal</button></div></div>
-          <div><div className="mb-2 text-[10px] font-semibold uppercase tracking-[.16em] text-white/45">UI blocks</div><div className="grid grid-cols-2 gap-1.5">{(['Button', 'Sidebar Panel', 'Header Bar', 'Input Box', 'Card Grid', 'Tabs', 'Custom Component'] as ElementKind[]).map((kind) => <button key={kind} className={`${btn} text-left`} onClick={() => addElement(kind)}>＋ {kind}</button>)}</div><p className="mt-2 text-[10px] leading-relaxed text-white/30">Select a screen, then add a block. Drag blocks between frames to change their screen.</p></div>
+          <div><div className="mb-2 text-[10px] font-semibold uppercase tracking-[.16em] text-white/45">UI blocks</div><div className="grid grid-cols-2 gap-1.5">{(['Button', 'Sidebar Panel', 'Header Bar', 'Input Box', 'Card Grid', 'Tabs', 'Custom Component'] as ElementKind[]).map((kind) => <button key={kind} draggable onDragStart={(event: ReactDragEvent<HTMLButtonElement>) => event.dataTransfer.setData('application/campfire-blueprint-kind', kind)} className={`${btn} cursor-grab text-left`} onClick={() => addElement(kind)}>＋ {kind}</button>)}</div><p className="mt-2 text-[10px] leading-relaxed text-white/30">Select a screen and click to add, or drag a block onto a screen.</p></div>
           <div className="mt-auto rounded-lg border border-white/[.08] bg-white/[.025] p-2.5 text-[10px] leading-relaxed text-white/40"><div className="mb-1 font-semibold text-white/60">Shortcuts</div>Ctrl + Shift + B · toggle studio<br />Drag background · pan canvas<br />Scroll wheel · zoom canvas</div>
         </aside>
 
         <div ref={viewportRef} className="relative min-w-0 flex-1 overflow-hidden" style={{ backgroundColor: '#07080b', backgroundImage: 'radial-gradient(#343842 0.75px, transparent 0.75px)', backgroundSize: '22px 22px', cursor: wireMode ? 'crosshair' : 'grab' }}
           onPointerDown={(event) => { if (event.target === event.currentTarget) panRef.current = { x: pan.x, y: pan.y, startX: event.clientX, startY: event.clientY } }}
+          onDragOver={(event) => { if (event.dataTransfer.types.includes('application/campfire-blueprint-kind')) event.preventDefault() }}
+          onDrop={(event) => {
+            const kind = event.dataTransfer.getData('application/campfire-blueprint-kind') as ElementKind
+            if (!kind) return
+            event.preventDefault()
+            const point = worldPoint(event.clientX, event.clientY)
+            const target = data.screens.find((screen) => point.x >= screen.x && point.x <= screen.x + screen.width && point.y >= screen.y && point.y <= screen.y + screen.height)
+            if (target) addElement(kind, target.id)
+            else setMessage('Drop the UI block onto a screen frame')
+          }}
           onWheel={(event) => { event.preventDefault(); setZoom((value) => Math.max(.3, Math.min(1.5, value - event.deltaY * .001))) }}
         >
+          <style>{'@keyframes blueprint-dash { to { stroke-dashoffset: -24; } }'}</style>
           <div className="absolute left-0 top-0 h-[3000px] w-[5000px]" style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
             <svg className="pointer-events-none absolute inset-0 overflow-visible" width="5000" height="3000">
               <defs><marker id="blueprint-arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill={CYAN} /></marker></defs>
@@ -379,7 +390,7 @@ export function BlueprintStudio() {
                 const path = `M ${from.x} ${from.y} C ${middleX} ${from.y}, ${middleX} ${to.y}, ${to.x} ${to.y}`
                 return <g key={flow.id} onClick={(event) => { event.stopPropagation(); setSelection({ type: 'flow', id: flow.id }) }} style={{ pointerEvents: 'auto', cursor: 'pointer' }}>
                   <path d={path} fill="none" stroke="transparent" strokeWidth="18" />
-                  <path d={path} fill="none" stroke={selection?.id === flow.id ? '#fff' : CYAN} strokeWidth="2.5" strokeDasharray="7 5" markerEnd="url(#blueprint-arrow)" className="animate-[dash_1.2s_linear_infinite]" />
+                  <path d={path} fill="none" stroke={selection?.id === flow.id ? '#fff' : CYAN} strokeWidth="2.5" strokeDasharray="7 5" markerEnd="url(#blueprint-arrow)" style={{ animation: 'blueprint-dash 1.2s linear infinite' }} />
                   <foreignObject x={middleX - 90} y={(from.y + to.y) / 2 - 14} width="180" height="28"><div className="truncate rounded-full border border-sky-400/40 bg-[#07121b] px-2 py-1 text-center text-[8px] text-sky-200">{flowLabel(flow)}</div></foreignObject>
                 </g>
               })}
