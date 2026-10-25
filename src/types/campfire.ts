@@ -152,7 +152,7 @@ export interface CreateCampfireInput {
   durationMinutes: number
 }
 
-export type PageSlot = `page-${number}` | 'page-signin' | 'page-lobby'
+export type PageSlot = `page-${number}` | 'page-0' | 'page-signin' | 'page-lobby'
 
 export interface CampfireStore {
   rooms: CampfireRoom[]
