@@ -1,6 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { ArrowRight, Flame, X } from 'lucide-react'
-import homepageVideo from '../../ui videos/homepage.mp4'
 import { useCampfireStore } from '../store/useCampfireStore'
 import type { CampfireRole } from '../types/campfire'
 import './PageSignIn.css'
@@ -27,22 +26,18 @@ export function PageSignIn() {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setIsAuthOpen(false)
     }
+
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isAuthOpen])
 
-  function handleEnter(event: FormEvent<HTMLFormElement>) {
+  function enterCampfire(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const name = displayName.trim()
     const handle = username.trim().replace(/^@+/, '')
     if (!name || !handle) return
 
-    updateProfile({
-      displayName: name,
-      username: handle,
-      role,
-      status: 'online',
-    })
+    updateProfile({ displayName: name, username: handle, role, status: 'online' })
     setActiveSupplyTab(role === 'developer' ? 'dev-rig' : 'solvely')
     setIsAuthOpen(false)
     setActivePage('page-lobby')
@@ -50,9 +45,18 @@ export function PageSignIn() {
 
   return (
     <div className="signin-page min-h-screen overflow-hidden bg-[#070709] text-white">
-      <header className="fixed inset-x-0 top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#070709]/70 px-6 backdrop-blur-2xl md:px-16">
-        <a aria-label="Campfire home" className="flex items-center gap-2.5" href="#home">
-          <Flame aria-hidden="true" className="text-orange-200 drop-shadow-[0_0_12px_rgba(251,146,60,0.45)]" size={20} />
+      <header className="signin-nav fixed inset-x-0 top-0 z-30 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#070709]/70 px-6 backdrop-blur-2xl md:px-16">
+        <a
+          aria-label="Campfire home"
+          className="flex items-center gap-2.5"
+          href="#home"
+          id="company"
+        >
+          <Flame
+            aria-hidden="true"
+            className="text-orange-200 drop-shadow-[0_0_12px_rgba(251,146,60,0.45)]"
+            size={20}
+          />
           <span className="text-lg font-bold tracking-tight text-white">Campfire</span>
         </a>
 
@@ -82,19 +86,8 @@ export function PageSignIn() {
           className="signin-hero relative isolate flex min-h-screen items-center justify-center overflow-hidden px-6 pb-16 pt-[76px] text-center"
           id="home"
         >
-          <video
-            aria-hidden="true"
-            autoPlay
-            className="signin-hero-video absolute inset-0 -z-30 h-full w-full object-cover"
-            loop
-            muted
-            playsInline
-            poster=""
-            preload="metadata"
-          >
-            <source src={homepageVideo} type="video/mp4" />
-          </video>
-          <div aria-hidden="true" className="signin-hero-shade absolute inset-0 -z-20" />
+          <div aria-hidden="true" className="signin-particle-field absolute inset-0 -z-30" />
+          <div aria-hidden="true" className="signin-neural absolute left-1/2 top-[48%] -z-20" />
           <div aria-hidden="true" className="signin-blue-glow absolute left-1/2 top-1/2 -z-10 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-cyan-500/10 via-blue-600/15 to-transparent blur-[120px]" />
 
           <div className="signin-hero-content mx-auto max-w-4xl">
@@ -120,7 +113,11 @@ export function PageSignIn() {
                 type="button"
               >
                 Enter Campfire
-                <ArrowRight aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-1" size={17} />
+                <ArrowRight
+                  aria-hidden="true"
+                  className="transition-transform duration-200 group-hover:translate-x-1"
+                  size={17}
+                />
               </button>
               <a
                 className={`rounded-full border border-white/[0.1] bg-white/[0.04] px-7 py-3.5 text-white hover:border-white/[0.2] hover:bg-white/[0.08] active:scale-[0.98] ${motion}`}
@@ -131,9 +128,12 @@ export function PageSignIn() {
             </div>
           </div>
 
-          <span className="sr-only" id="features">Campfire brings focused rooms, shared tools, and lightweight accountability together.</span>
-          <span className="sr-only" id="coverage">Designed for developers and students working together.</span>
-          <span className="sr-only" id="company">Campfire is a local-first collaborative workspace.</span>
+          <span className="sr-only" id="features">
+            Campfire brings focused rooms, shared tools, and lightweight accountability together.
+          </span>
+          <span className="sr-only" id="coverage">
+            Designed for developers and students working together.
+          </span>
           <span className="sr-only" id="pricing">Campfire is ready to try.</span>
         </section>
       </main>
@@ -169,7 +169,7 @@ export function PageSignIn() {
               </button>
             </div>
 
-            <form className="space-y-4" onSubmit={handleEnter}>
+            <form className="space-y-4" onSubmit={enterCampfire}>
               <label className="block">
                 <span className="mb-2 block text-xs font-medium text-zinc-300">Display name</span>
                 <input
@@ -190,7 +190,9 @@ export function PageSignIn() {
                     autoCapitalize="none"
                     autoComplete="username"
                     className="w-full bg-transparent text-sm text-white outline-none placeholder:text-zinc-600"
-                    onChange={(event) => setUsername(event.target.value.replace(/^@+/, '').replace(/\s/g, '').toLowerCase())}
+                    onChange={(event) =>
+                      setUsername(event.target.value.replace(/^@+/, '').replace(/\s/g, '').toLowerCase())
+                    }
                     placeholder="yourhandle"
                     required
                     value={username}
@@ -199,7 +201,9 @@ export function PageSignIn() {
               </label>
 
               <fieldset className="pt-1">
-                <legend className="mb-2 text-xs font-medium text-zinc-300">Choose your workspace</legend>
+                <legend className="mb-2 text-xs font-medium text-zinc-300">
+                  Choose your workspace
+                </legend>
                 <div className="grid grid-cols-2 gap-2">
                   {(['developer', 'student'] as const).map((value) => (
                     <button
