@@ -1,0 +1,79 @@
+.signin-page {
+  font-family: "SF Pro Display", "SF Pro Text", -apple-system, sans-serif;
+}
+
+.signin-hero {
+  min-height: max(720px, 100svh);
+}
+
+.signin-hero-video {
+  object-position: center 52%;
+  opacity: 0.82;
+  filter: brightness(0.72) saturate(0.9);
+}
+
+.signin-hero-shade {
+  background:
+    linear-gradient(180deg, rgba(7, 7, 9, 0.55), rgba(7, 7, 9, 0.12) 34%, rgba(7, 7, 9, 0.33) 72%, #070709 100%),
+    linear-gradient(90deg, rgba(7, 7, 9, 0.48), transparent 25%, transparent 75%, rgba(7, 7, 9, 0.48));
+}
+
+.signin-hero-content {
+  animation: signin-hero-arrive 850ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.signin-word-gradient {
+  background: linear-gradient(105deg, #fff 5%, #d6f1ff 42%, #91c8ff 74%, #dcecff);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.signin-modal-backdrop {
+  animation: signin-backdrop-arrive 180ms ease-out both;
+}
+
+.signin-modal {
+  animation: signin-modal-arrive 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes signin-hero-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes signin-backdrop-arrive {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes signin-modal-arrive {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signin-hero-content,
+  .signin-modal-backdrop,
+  .signin-modal {
+    animation: none;
+  }
+}
