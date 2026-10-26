@@ -12,10 +12,12 @@
   <img alt="Zustand" src="https://img.shields.io/badge/Zustand-5-443E38">
   <img alt="Piston Code Engine" src="https://img.shields.io/badge/Code_Engine-Piston-7C3AED">
   <img alt="Web Audio API" src="https://img.shields.io/badge/Audio-Web_Audio_API-22C55E">
-  <img alt="Liquid Glass UI" src="https://img.shields.io/badge/UI-60Hz_Liquid_Glass-111114?labelColor=777777">
+  <img alt="UI rebuild in progress" src="https://img.shields.io/badge/UI-Rebuild_in_progress-777777">
 </p>
 
 > **Project status:** The current app opens to a blank page while the UI is rebuilt. Existing page, component, and feature code is retained for reuse. Room state runs locally in the browser; real-time multi-user room sync and voice transport are not currently provided.
+>
+> The feature inventory below describes retained source code; those features are not currently exposed in the app.
 
 ## Vision
 
