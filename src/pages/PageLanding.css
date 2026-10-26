@@ -1,0 +1,182 @@
+.landing-page {
+  font-family: "SF Pro Display", "SF Pro Text", -apple-system, sans-serif;
+}
+
+.landing-action {
+  transform: translateZ(0);
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-action:active {
+  transform: scale(0.98) translateZ(0);
+}
+
+.landing-hero {
+  min-height: 100svh;
+}
+
+.landing-starfield {
+  background:
+    radial-gradient(1px 1px at 8% 22%, rgba(186, 221, 255, 0.58) 50%, transparent 100%),
+    radial-gradient(1px 1px at 18% 66%, rgba(186, 221, 255, 0.46) 50%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 28% 37%, rgba(141, 206, 255, 0.5) 50%, transparent 100%),
+    radial-gradient(1px 1px at 35% 18%, rgba(186, 221, 255, 0.45) 50%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 67% 23%, rgba(186, 221, 255, 0.58) 50%, transparent 100%),
+    radial-gradient(1px 1px at 81% 71%, rgba(141, 206, 255, 0.52) 50%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 92% 38%, rgba(186, 221, 255, 0.48) 50%, transparent 100%),
+    radial-gradient(ellipse at 50% 55%, rgba(12, 64, 112, 0.22), transparent 57%);
+}
+
+.landing-ambient {
+  width: min(74vw, 880px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(14, 101, 174, 0.22), rgba(6, 46, 86, 0.1) 42%, transparent 68%);
+  filter: blur(75px);
+  transform: translate(-50%, -50%);
+  animation: ambient-breathe 11s ease-in-out infinite alternate;
+}
+
+.landing-neural-figure {
+  position: absolute;
+  z-index: -10;
+  top: 50%;
+  left: 50%;
+  width: min(61vw, 570px);
+  min-width: 360px;
+  overflow: visible;
+  opacity: 0.76;
+  transform: translate(-50%, -51%);
+  animation: neural-float 12s ease-in-out infinite;
+}
+
+.neural-orbit {
+  transform-origin: 280px 320px;
+}
+
+.neural-orbit-one {
+  animation: orbit-spin 45s linear infinite;
+}
+
+.neural-orbit-two {
+  animation: orbit-spin 58s linear infinite reverse;
+}
+
+.neural-pulse {
+  animation: node-pulse 3.4s ease-in-out infinite alternate;
+}
+
+.landing-copy {
+  position: relative;
+  z-index: 1;
+  animation: copy-arrive 800ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.landing-heading-accent {
+  background: linear-gradient(100deg, #fff 0%, #d6f0ff 38%, #9ad4ff 72%, #f1f8ff);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 36px rgba(103, 190, 255, 0.08);
+}
+
+.landing-features article {
+  padding: 20px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.landing-features article > span {
+  color: #89b8dc;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+}
+
+.landing-features h2 {
+  margin: 12px 0 7px;
+  color: #e8edf3;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.landing-features p {
+  margin: 0;
+  color: #9299a4;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+@keyframes neural-float {
+  0%,
+  100% {
+    opacity: 0.68;
+    transform: translate(-50%, -51%) scale(0.985);
+  }
+
+  50% {
+    opacity: 0.82;
+    transform: translate(-50%, -52%) scale(1.015);
+  }
+}
+
+@keyframes orbit-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes node-pulse {
+  from {
+    opacity: 0.55;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ambient-breathe {
+  from {
+    opacity: 0.65;
+    scale: 0.96;
+  }
+
+  to {
+    opacity: 1;
+    scale: 1.05;
+  }
+}
+
+@keyframes copy-arrive {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .landing-neural-figure {
+    width: min(105vw, 520px);
+    min-width: 320px;
+    opacity: 0.55;
+  }
+
+  .landing-hero {
+    min-height: max(680px, 100svh);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-ambient,
+  .landing-neural-figure,
+  .neural-orbit-one,
+  .neural-orbit-two,
+  .neural-pulse,
+  .landing-copy {
+    animation: none;
+  }
+}

@@ -1,95 +1,41 @@
-.video-signin {
-  display: grid;
-  min-height: 100svh;
-  place-items: center;
-  overflow: hidden;
+.signin-page {
+  font-family: "SF Pro Display", "SF Pro Text", -apple-system, sans-serif;
 }
 
-.video-signin-frame {
-  position: relative;
-  width: min(100vw, 158.06svh);
-  aspect-ratio: 1138 / 720;
-  max-height: 100svh;
-  overflow: hidden;
-  background: #000;
+.signin-atmosphere {
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(48, 122, 190, 0.12), transparent 44%),
+    radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.035), transparent 65%);
 }
 
-.video-signin-media {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+.signin-card {
+  animation: signin-card-arrive 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.video-signin-hotspot {
-  position: absolute;
-  z-index: 1;
-  display: block;
-  border: 0;
-  border-radius: 9999px;
-  background: transparent;
-  cursor: pointer;
+.signin-field {
+  transform: translateZ(0);
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.video-signin-hotspot-nav {
-  top: 6%;
-  left: 66%;
-  width: 14%;
-  height: 11%;
+.signin-field:active {
+  transform: scale(0.98) translateZ(0);
 }
 
-.video-signin-hotspot-primary {
-  top: 55%;
-  left: 38%;
-  width: 12%;
-  height: 10%;
-}
-
-.video-signin-hotspot-secondary {
-  top: 55%;
-  left: 49%;
-  width: 17%;
-  height: 10%;
-}
-
-.video-signin-hotspot:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.9);
-  outline-offset: 2px;
-}
-
-.signin-modal-backdrop {
-  animation: signin-backdrop-arrive 180ms ease-out both;
-}
-
-.signin-modal {
-  animation: signin-modal-arrive 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-@keyframes signin-backdrop-arrive {
+@keyframes signin-card-arrive {
   from {
     opacity: 0;
+    transform: translateY(10px) scale(0.99);
   }
 
   to {
     opacity: 1;
-  }
-}
-
-@keyframes signin-modal-arrive {
-  from {
-    opacity: 0;
-    transform: scale(0.96) translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .signin-modal-backdrop,
-  .signin-modal {
+  .signin-card {
     animation: none;
   }
 }
