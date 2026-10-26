@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import { PageLanding } from './pages/PageLanding'
 import { PageSignIn } from './pages/PageSignIn'
 import { startCampfireTicker, useCampfireStore } from './store/useCampfireStore'
 
@@ -14,9 +13,7 @@ export default function App() {
 
   return (
     <main className="min-h-screen bg-[#070709] text-[#F4F4F6]">
-      {activePage === 'page-0' ? (
-        <PageLanding />
-      ) : activePage === 'page-signin' ? (
+      {activePage === 'page-0' || activePage === 'page-signin' ? (
         <PageSignIn />
       ) : activePage === 'page-lobby' ? (
         <section className="relative isolate flex min-h-screen items-center justify-center overflow-hidden px-6 text-center before:absolute before:inset-0 before:-z-10 before:bg-[radial-gradient(ellipse_at_50%_45%,rgba(255,255,255,0.07),transparent_52%)]">

@@ -1,88 +1,60 @@
-.signin-page {
-  font-family: "SF Pro Display", "SF Pro Text", -apple-system, sans-serif;
+.video-signin {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  overflow: hidden;
 }
 
-.signin-hero {
-  min-height: max(720px, 100svh);
-}
-
-.signin-particle-field {
-  background:
-    radial-gradient(1px 1px at 8% 24%, rgba(173, 211, 255, 0.48) 50%, transparent 100%),
-    radial-gradient(1px 1px at 17% 66%, rgba(173, 211, 255, 0.34) 50%, transparent 100%),
-    radial-gradient(1px 1px at 32% 16%, rgba(173, 211, 255, 0.42) 50%, transparent 100%),
-    radial-gradient(1px 1px at 71% 21%, rgba(173, 211, 255, 0.38) 50%, transparent 100%),
-    radial-gradient(1px 1px at 87% 63%, rgba(173, 211, 255, 0.4) 50%, transparent 100%),
-    radial-gradient(1px 1px at 94% 39%, rgba(173, 211, 255, 0.46) 50%, transparent 100%),
-    radial-gradient(ellipse at 50% 48%, rgba(15, 66, 115, 0.18), transparent 56%);
-  opacity: 0.78;
-}
-
-.signin-neural {
-  width: min(84vw, 840px);
-  aspect-ratio: 1.45;
-  border-radius: 50%;
-  background:
-    radial-gradient(ellipse at 50% 48%, transparent 34%, rgba(44, 163, 249, 0.22) 38%, transparent 39%),
-    radial-gradient(ellipse at 50% 49%, transparent 44%, rgba(27, 124, 205, 0.17) 45%, transparent 46%),
-    radial-gradient(circle at 28% 36%, rgba(133, 210, 255, 0.75) 0 1px, transparent 2px),
-    radial-gradient(circle at 34% 26%, rgba(105, 194, 255, 0.58) 0 1px, transparent 2px),
-    radial-gradient(circle at 43% 20%, rgba(133, 210, 255, 0.55) 0 1px, transparent 2px),
-    radial-gradient(circle at 56% 19%, rgba(133, 210, 255, 0.6) 0 1px, transparent 2px),
-    radial-gradient(circle at 68% 27%, rgba(105, 194, 255, 0.64) 0 1px, transparent 2px),
-    radial-gradient(circle at 74% 38%, rgba(133, 210, 255, 0.68) 0 1px, transparent 2px),
-    radial-gradient(circle at 25% 49%, rgba(105, 194, 255, 0.55) 0 1px, transparent 2px),
-    radial-gradient(circle at 75% 51%, rgba(105, 194, 255, 0.65) 0 1px, transparent 2px),
-    radial-gradient(circle at 31% 63%, rgba(133, 210, 255, 0.65) 0 1px, transparent 2px),
-    radial-gradient(circle at 38% 73%, rgba(105, 194, 255, 0.5) 0 1px, transparent 2px),
-    radial-gradient(circle at 49% 78%, rgba(133, 210, 255, 0.65) 0 1px, transparent 2px),
-    radial-gradient(circle at 61% 74%, rgba(105, 194, 255, 0.56) 0 1px, transparent 2px),
-    radial-gradient(circle at 69% 65%, rgba(133, 210, 255, 0.64) 0 1px, transparent 2px),
-    radial-gradient(ellipse at 50% 50%, rgba(9, 33, 58, 0.3), transparent 67%);
-  box-shadow:
-    0 0 70px rgba(13, 81, 142, 0.15),
-    inset 0 0 75px rgba(43, 139, 219, 0.08);
-  opacity: 0.8;
-  transform: translate(-50%, -50%);
-  animation: signin-neural-drift 18s ease-in-out infinite;
-}
-
-.signin-neural::before,
-.signin-neural::after {
-  position: absolute;
-  inset: 7%;
-  border: 1px solid rgba(109, 190, 255, 0.14);
-  border-radius: 50%;
-  content: "";
-}
-
-.signin-neural::before {
-  transform: rotateX(66deg) rotateZ(-18deg);
-  animation: signin-orbit 36s linear infinite;
-}
-
-.signin-neural::after {
-  inset: 16%;
-  border-style: dashed;
-  border-color: rgba(84, 169, 236, 0.12);
-  transform: rotateY(66deg) rotateZ(24deg);
-  animation: signin-orbit 44s linear infinite reverse;
-}
-
-.signin-blue-glow {
-  pointer-events: none;
-}
-
-.signin-hero-content {
+.video-signin-frame {
   position: relative;
-  z-index: 1;
-  animation: signin-hero-arrive 850ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  width: min(100vw, 158.06svh);
+  aspect-ratio: 1138 / 720;
+  max-height: 100svh;
+  overflow: hidden;
+  background: #000;
 }
 
-.signin-word-gradient {
-  background: linear-gradient(105deg, #fff 5%, #d6f1ff 42%, #91c8ff 74%, #dcecff);
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+.video-signin-media {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.video-signin-hotspot {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.video-signin-hotspot-nav {
+  top: 6%;
+  left: 66%;
+  width: 14%;
+  height: 11%;
+}
+
+.video-signin-hotspot-primary {
+  top: 55%;
+  left: 38%;
+  width: 12%;
+  height: 10%;
+}
+
+.video-signin-hotspot-secondary {
+  top: 55%;
+  left: 49%;
+  width: 17%;
+  height: 10%;
+}
+
+.video-signin-hotspot:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 2px;
 }
 
 .signin-modal-backdrop {
@@ -91,37 +63,6 @@
 
 .signin-modal {
   animation: signin-modal-arrive 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-@keyframes signin-neural-drift {
-  0%,
-  100% {
-    transform: translate(-50%, -50%) scale(0.98);
-    opacity: 0.67;
-  }
-
-  50% {
-    transform: translate(-50%, -51%) scale(1.02);
-    opacity: 0.84;
-  }
-}
-
-@keyframes signin-orbit {
-  to {
-    rotate: 360deg;
-  }
-}
-
-@keyframes signin-hero-arrive {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 @keyframes signin-backdrop-arrive {
@@ -147,10 +88,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .signin-neural,
-  .signin-neural::before,
-  .signin-neural::after,
-  .signin-hero-content,
   .signin-modal-backdrop,
   .signin-modal {
     animation: none;
