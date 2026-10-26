@@ -4,8 +4,8 @@
 
 Campfire is a local-first social workspace for small, timed collaboration rooms.
 Rooms support countdown, deadman (chat activity adds five minutes), and
-Pomodoro timers. The interface uses an obsidian liquid-glass palette and a
-fixed three-column layout.
+Pomodoro timers. The current app shell is intentionally blank while the UI is
+being rebuilt as new pages.
 
 ## Stack and source of truth
 
@@ -19,29 +19,20 @@ fixed three-column layout.
   filtered values inside the component, never inside a selector.
 - `startCampfireTicker()` starts the shared one-second timer engine.
 
-## Layout and components
+## Reusable UI components
 
-- `src/App.tsx` defines the fixed 260px Radar rail, flexible center stage, and
-  fixed 310px Chat rail. The center contains a 52px header, flexible Supply
-  Dock, and 58px voice dock.
-- `src/components/layout/RadarSidebar.tsx` switches rooms and opens the
-  creation modal. `TopBurnHeader.tsx` shows the room, participants, clock, and
-  15-minute Stoke action.
-- `src/components/supplies/SupplyDock.tsx` provides the Monaco Dev Rig, shared
-  room scratchpad, pinned links, Piston execution, and terminal output.
-- `src/components/layout/BottomVoiceDock.tsx` contains local voice controls,
-  browser screen capture, and a Web Audio brown-noise generator.
-- `src/components/layout/RightChatSidebar.tsx` renders room messages and sends
-  chat input. `src/components/modals/CreateCampfireModal.tsx` creates rooms.
-- Do not reintroduce the removed layout customizer, floating panel toolbars, or
-  overlays. The fixed shell is intentional.
+- `src/App.tsx` intentionally renders a blank page; do not restore the previous
+  landing, sign-in, lobby, or fixed three-column shell unless requested.
+- The previous interface and feature components are retained under
+  `src/components/_legacy/`, with the landing and sign-in pages under
+  `src/pages/`. Reuse and place these pieces in the new pages as requested;
+  do not delete them as part of clearing the old UI.
+- New pages should be built and wired in their respective page components.
 
-## UX and behavior
+## Preserved behavior
 
 - Keep the app usable without Supabase credentials. State and collaboration
   features currently operate locally in the browser.
-- Keep timer and clock text tabular; keep buttons and interactive cards on the
-  200ms liquid-glass spring transition.
 - Code execution sends editor content to the Piston API only when the user
   presses Run. If the API is unavailable, the terminal reports the failure and
   uses the intentionally limited literal-print and arithmetic offline evaluator.

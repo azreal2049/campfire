@@ -1,6 +1,6 @@
 # 🔥 Campfire
 
-### Monochrome Liquid-Glass Collaborative Workspace
+### Local-first collaboration workspace — UI rebuild in progress
 
 **Ephemeral rooms for focused study, coding, and creative work.** Campfire combines a room-and-presence-inspired workspace with compact chat, a shared-feeling tool dock, and timers that make every session intentional.
 
@@ -15,7 +15,7 @@
   <img alt="Liquid Glass UI" src="https://img.shields.io/badge/UI-60Hz_Liquid_Glass-111114?labelColor=777777">
 </p>
 
-> **Project status:** Campfire is a local-first desktop-style web preview. The interface and room state run in the browser; real-time multi-user room sync and voice transport are not currently provided.
+> **Project status:** The current app opens to a blank page while the UI is rebuilt. Existing page, component, and feature code is retained for reuse. Room state runs locally in the browser; real-time multi-user room sync and voice transport are not currently provided.
 
 ## Vision
 
@@ -27,7 +27,7 @@ Each room can use one of three burn modes:
 - **POMODORO** — a focus sprint with a break phase.
 - **DEADMAN** — room activity fuels the timer, extending the session.
 
-The visual language is monochrome obsidian glass: restrained translucent surfaces, SF-style system typography, tabular timer text, and short GPU-friendly transitions. The app is built with React 19, TypeScript, Vite, Tailwind CSS 4, Lucide icons, and Zustand 5.
+The app is built with React 19, TypeScript, Vite, Tailwind CSS 4, Lucide icons, and Zustand 5. The previous visual language and pages are retained in source but are not mounted in the current blank app shell.
 
 ## Features
 
@@ -82,12 +82,10 @@ The solver currently does not include a scientific formula-pad editor, interacti
 
 ```text
 src/
-  App.tsx                         Fixed three-column app shell
+  App.tsx                         Blank shell for the UI rebuild
+  pages/                          Retained landing and sign-in pages
   components/
-    layout/                       Radar, header, chat, and voice controls
-    modals/                       Room creation dialog
-    supplies/                     Dev Rig, Solvely, whiteboard, and dock
-    UserSettingsModal.tsx          Profile, audio, appearance, and shortcuts
+    _legacy/                      Retained previous UI and feature components
   store/useCampfireStore.ts        Local room, profile, timer, and tool state
   types/campfire.ts                Shared TypeScript domain types
 ```

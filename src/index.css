@@ -14,13 +14,4 @@ body,
 
 body {
   min-height: 100vh;
-  background: #070709;
-  color: #fff;
-  font-family: "SF Pro Display", "SF Pro Text", -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-
-button,
-select {
-  font: inherit;
 }
