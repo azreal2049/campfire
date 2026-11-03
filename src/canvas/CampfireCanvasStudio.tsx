@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent } from 'react'
 import { ArrowDownToLine, ArrowUpToLine, Bot, Copy, Eye, MousePointer2, Plus, Redo2, Save, Search, Trash2, Undo2, X } from 'lucide-react'
+import { offlineOutput } from '../lib/offlineCode'
 import './campfireCanvasStudio.css'
 
 type ElementKind =
@@ -13,6 +14,7 @@ type StudioElement = {
   id: string
   pageId: string
   kind: ElementKind
+  icon: string
   label: string
   subtext: string
   x: number
@@ -93,7 +95,7 @@ function makeElement(pageId: string, kind: ElementKind, x: number, y: number, ov
   }
   const [width, height] = sizes[kind]
   return {
-    id: uid('element'), pageId, kind, label: names[kind], subtext: '', x, y, width, height, zIndex: 1,
+    id: uid('element'), pageId, kind, icon: '', label: names[kind], subtext: '', x, y, width, height, zIndex: 1,
     ...defaultStyle, ...overrides,
   }
 }
@@ -148,7 +150,7 @@ function readSavedState(): CanvasState {
     if (!raw) return seedState()
     const saved = JSON.parse(raw) as CanvasState
     if (!Array.isArray(saved.pages) || !Array.isArray(saved.elements) || !Array.isArray(saved.wires)) return seedState()
-    return saved
+    return { ...saved, elements: saved.elements.map((element) => ({ ...element, icon: typeof element.icon === 'string' ? element.icon : '' })) }
   } catch {
     return seedState()
   }
@@ -201,6 +203,10 @@ export function CampfireCanvasStudio() {
   const [messages, setMessages] = useState(['Welcome to the Campfire room.', 'Design your own workspace by dragging blocks here.'])
   const [micOn, setMicOn] = useState(true)
   const [runOutput, setRunOutput] = useState('Ready. Run an IDE widget to see output here.')
+  const [timerSeconds, setTimerSeconds] = useState(25 * 60)
+  const [ideFiles, setIdeFiles] = useState([{ name: 'main.js', content: 'console.log("Hello Campfire")' }])
+  const [activeIdeFile, setActiveIdeFile] = useState(0)
+  const [ideLanguage, setIdeLanguage] = useState('javascript')
   const [wireFrom, setWireFrom] = useState('')
   const boardRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<DragState | null>(null)
@@ -258,6 +264,47 @@ export function CampfireCanvasStudio() {
     const timer = window.setInterval(() => { void saveToRepo() }, 15_000)
     return () => window.clearInterval(timer)
   }, [saveToRepo])
+
+  useEffect(() => {
+    if (mode !== 'preview') return
+    const timer = window.setInterval(() => setTimerSeconds((seconds) => Math.max(0, seconds - 1)), 1000)
+    return () => window.clearInterval(timer)
+  }, [mode])
+
+  function saveVaultItem(title: string, content: string) {
+    try {
+      const current: unknown = JSON.parse(localStorage.getItem('campfire-vault-ai') ?? '[]')
+      const items = Array.isArray(current) ? current : []
+      localStorage.setItem('campfire-vault-ai', JSON.stringify([{ title, content }, ...items]))
+      setStatus(`Saved to Personal Vault: ${title}`)
+    } catch (error) {
+      setStatus(`Vault save failed: ${error instanceof Error ? error.message : 'storage unavailable'}`)
+    }
+  }
+
+  async function runIDE() {
+    const file = ideFiles[activeIdeFile]
+    if (!file) return
+    const pistonLanguage = ideLanguage === 'typescript' ? 'typescript' : ideLanguage
+    const extension = ideLanguage === 'python' ? 'py' : ideLanguage === 'javascript' || ideLanguage === 'typescript' ? 'js' : ideLanguage === 'rust' ? 'rs' : 'cpp'
+    try {
+      const response = await fetch('https://emkc.org/api/v2/piston/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(12_000),
+        body: JSON.stringify({ language: pistonLanguage, version: '*', files: [{ name: file.name, content: file.content }], stdin: '', args: [], run_timeout: 5000 }),
+      })
+      if (!response.ok) throw new Error(`Piston returned HTTP ${response.status}.`)
+      const payload: unknown = await response.json()
+      if (!payload || typeof payload !== 'object' || !('run' in payload)) throw new Error('Invalid Piston response.')
+      const result = (payload as { run?: { stdout?: string; stderr?: string; code?: number } }).run
+      if (!result) throw new Error('Piston did not return a run result.')
+      setRunOutput([result.stdout, result.stderr].filter(Boolean).join('\n') || (result.code === 0 ? 'Process completed with no output.' : 'Process failed.'))
+    } catch (error) {
+      const fallback = offlineOutput(file.content, extension)
+      setRunOutput(`${fallback.stdout}${fallback.stderr ? `\n${fallback.stderr}` : ''}\n\nOffline fallback · ${error instanceof Error ? error.message : 'Piston unavailable'}`)
+    }
+  }
 
   const updateElement = useCallback((id: string, patch: Partial<StudioElement>) => {
     record({ ...state, elements: state.elements.map((element) => element.id === id ? { ...element, ...patch } : element) })
@@ -342,8 +389,8 @@ export function CampfireCanvasStudio() {
     const schema = {
       pages: state.pages.map((page) => ({
         id: page.id, name: page.name, x: page.x, y: page.y, width: page.width, height: page.height,
-        elements: state.elements.filter((element) => element.pageId === page.id).map(({ id, kind, label, subtext, x, y, width, height, zIndex, action, targetPageId, background, opacity, blur, borderWidth, borderColor, borderStyle, radius, fontSize, fontWeight, textAlign, textColor, shadow, placeholder }) => ({
-          id, kind, label, subtext, x, y, width, height, zIndex, action, targetPageId, background, opacity, blur, borderWidth, borderColor, borderStyle, radius, fontSize, fontWeight, textAlign, textColor, shadow, placeholder,
+        elements: state.elements.filter((element) => element.pageId === page.id).map(({ id, kind, icon, label, subtext, x, y, width, height, zIndex, action, targetPageId, background, opacity, blur, borderWidth, borderColor, borderStyle, radius, fontSize, fontWeight, textAlign, textColor, shadow, placeholder }) => ({
+          id, kind, icon, label, subtext, x, y, width, height, zIndex, action, targetPageId, background, opacity, blur, borderWidth, borderColor, borderStyle, radius, fontSize, fontWeight, textAlign, textColor, shadow, placeholder,
         })),
       })),
       wires: state.wires,
@@ -542,10 +589,10 @@ export function CampfireCanvasStudio() {
     if (element.action === 'navigate') { if (element.targetPageId) { setSelectedPageId(element.targetPageId); setMode('preview') } }
     else if (element.action === 'popup') setPopupPageId(element.targetPageId || element.pageId)
     else if (element.action === 'close') setPopupPageId('')
-    else if (element.action === 'ai' || element.kind === 'ai') setAiOpen((open) => !open)
+    else if (element.action === 'ai') setAiOpen((open) => !open)
     else if (element.action === 'mic') setMicOn((value) => !value)
-    else if (element.action === 'run' || element.kind === 'ide') setRunOutput('Run complete · output captured locally.')
-    else if (element.action === 'save' || element.kind === 'vault') setStatus('Saved current design to Personal Vault')
+    else if (element.action === 'run') void runIDE()
+    else if (element.action === 'save') saveVaultItem('Canvas design', JSON.stringify(state))
     else if (element.kind === 'toggle') setMode((value) => value === 'preview' ? 'focus' : 'preview')
   }
 
@@ -562,31 +609,31 @@ export function CampfireCanvasStudio() {
       case 'roster':
         return <div className="studio-widget-content"><strong>{element.label}</strong><p>● You · {micOn ? 'Mic on' : 'Muted'}</p><p>● Nova · Online</p><p>● Kai · Online</p><button onClick={() => setMicOn((value) => !value)}>Toggle mic</button></div>
       case 'timer':
-        return <div className="studio-widget-content"><strong>{element.label}</strong><p className="studio-timer">25:00</p><button onClick={() => setStatus('Timer stoked')}>Stoke</button> <button onClick={() => setStatus('Timer reset')}>Reset</button></div>
+        return <div className="studio-widget-content"><strong>{element.label}</strong><p className="studio-timer">{`${String(Math.floor(timerSeconds / 60)).padStart(2, '0')}:${String(timerSeconds % 60).padStart(2, '0')}`}</p><div><button onClick={() => setTimerSeconds((seconds) => seconds + 5 * 60)}>Stoke</button> <button onClick={() => setTimerSeconds(25 * 60)}>Reset</button></div></div>
       case 'ide':
-        return <div className="studio-widget-content"><strong>{element.label}</strong><textarea defaultValue={'console.log("Hello Campfire")'} /><button onClick={() => setRunOutput('Hello Campfire')}>▶ Run Code</button><pre>{runOutput}</pre></div>
+        return <div className="studio-widget-content studio-ide-widget"><strong>{element.label}</strong><div className="studio-ide-tabs">{ideFiles.map((file, index) => <button className={index === activeIdeFile ? 'active' : ''} key={file.name} onClick={() => { setActiveIdeFile(index); setIdeLanguage(file.name.endsWith('.py') ? 'python' : file.name.endsWith('.rs') ? 'rust' : file.name.endsWith('.cpp') ? 'cpp' : 'javascript') }}>{file.name}</button>)}<button onClick={() => { const name = `file-${ideFiles.length + 1}.js`; setIdeFiles((files) => [...files, { name, content: '' }]); setActiveIdeFile(ideFiles.length) }}>+</button></div><textarea className="studio-code-editor" value={ideFiles[activeIdeFile]?.content ?? ''} onChange={(event) => setIdeFiles((files) => files.map((file, index) => index === activeIdeFile ? { ...file, content: event.target.value } : file))} /><div className="studio-ide-controls"><select aria-label="Code language" value={ideLanguage} onChange={(event) => setIdeLanguage(event.target.value)}><option value="rust">Rust</option><option value="typescript">TypeScript</option><option value="javascript">JavaScript</option><option value="python">Python</option><option value="cpp">C++</option></select><button onClick={() => void runIDE()}>▶ Run Code</button></div><pre>{runOutput}</pre></div>
       case 'console':
         return <div className="studio-widget-content"><strong>{element.label}</strong><pre>{runOutput}</pre><button onClick={() => setRunOutput('Tests passed · 2 assertions · 8ms')}>Run tests</button></div>
       case 'browser':
-        return <div className="studio-widget-content"><strong>{element.label}</strong><input placeholder="https://example.com" /><div className="studio-browser-preview">Live preview</div></div>
+        return <div className="studio-widget-content"><strong>{element.label}</strong><input placeholder="URL or use current IDE HTML" /><iframe className="studio-browser-preview" title="Sandboxed HTML preview" sandbox="" srcDoc={ideLanguage === 'html' ? ideFiles[activeIdeFile]?.content ?? '<h2>Campfire preview</h2>' : '<!doctype html><html><body style="background:#111;color:#ddd;font:14px sans-serif"><h2>Campfire preview</h2><p>Choose HTML in the IDE to render a local preview.</p></body></html>'} /></div>
       case 'whiteboard':
-        return <div className="studio-widget-content"><strong>{element.label}</strong><textarea placeholder="Write or sketch your notes..." /></div>
+        return <div className="studio-widget-content"><strong>{element.label}</strong><canvas className="studio-whiteboard-canvas" width="600" height="300" onPointerDown={(event) => { const canvas = event.currentTarget; const context = canvas.getContext('2d'); if (!context) return; const rect = canvas.getBoundingClientRect(); context.beginPath(); context.moveTo((event.clientX - rect.left) * canvas.width / rect.width, (event.clientY - rect.top) * canvas.height / rect.height); canvas.setPointerCapture(event.pointerId) }} onPointerMove={(event) => { if (!event.buttons) return; const canvas = event.currentTarget; const context = canvas.getContext('2d'); if (!context) return; const rect = canvas.getBoundingClientRect(); context.lineWidth = 3; context.lineCap = 'round'; context.strokeStyle = '#e4e4e7'; context.lineTo((event.clientX - rect.left) * canvas.width / rect.width, (event.clientY - rect.top) * canvas.height / rect.height); context.stroke() }} /><textarea placeholder="Write structured notes..." /></div>
       case 'solver':
         return <div className="studio-widget-content"><strong>{element.label}</strong><textarea placeholder="Describe a doubt..." /><button onClick={() => setStatus('AI breakdown ready')}>Solve step by step</button></div>
       case 'mindmap':
-        return <div className="studio-widget-content"><strong>{element.label}</strong><button onClick={() => setStatus('Mindmap summary saved')}>Generate summary & save</button></div>
+        return <div className="studio-widget-content"><strong>{element.label}</strong><button onClick={() => saveVaultItem('AI mindmap note', 'Mindmap summary generated from the current workspace notes.')}>Generate summary & save</button></div>
       case 'vault':
-        return <div className="studio-widget-content"><strong>{element.label}</strong><p>Code Projects　 Study Notes　 Solved Doubts</p><button onClick={() => setStatus('Vault item saved')}>Open / Save</button></div>
+        return <div className="studio-widget-content"><strong>{element.label}</strong><p>Code Projects　 Study Notes　 Solved Doubts</p><button onClick={() => saveVaultItem('Workspace snapshot', JSON.stringify(state))}>Save workspace</button></div>
       case 'ai':
-        return <button className="studio-ai-button" onClick={() => setAiOpen((open) => !open)}>🤖 {element.label}</button>
+        return <button className="studio-ai-button" onClick={() => setAiOpen((open) => !open)}>{element.icon || '🤖'} {element.label}</button>
       case 'button':
         return <button className="studio-live-button" onClick={() => handleAction(element)}>{element.label}</button>
       case 'badge':
         return <span className="studio-live-badge">{element.label}</span>
       case 'avatar':
-        return <button className="studio-live-avatar" onClick={() => handleAction(element)}>{element.label}</button>
+        return <button className="studio-live-avatar" onClick={() => handleAction(element)}>{element.icon || element.label}</button>
       default:
-        return <span className="studio-widget-label">{element.label}</span>
+        return <span className="studio-widget-label">{element.icon ? `${element.icon} ` : ''}{element.label}</span>
     }
   }
 
@@ -657,7 +704,7 @@ export function CampfireCanvasStudio() {
                   style={{ left: page.x + element.x, top: page.y + element.y, width: element.width, height: element.height, zIndex: element.zIndex, ...styleFor(element) }}
                   onPointerDown={(event) => beginElementDrag(event, element)}
                   onDoubleClick={(event) => { if (mode !== 'preview') { event.stopPropagation(); setInlineId(element.id) } }}
-                  onClick={(event) => { event.stopPropagation(); if (mode === 'preview') handleAction(element); else { setSelectedElementId(element.id); setSelectedPageId(element.pageId) } }}
+                  onClick={(event) => { event.stopPropagation(); if (mode === 'preview') { const control = (event.target as HTMLElement).closest('button,input,textarea,select,iframe'); if (!control || (element.kind === 'button' && control.classList.contains('studio-live-button'))) handleAction(element) } else { setSelectedElementId(element.id); setSelectedPageId(element.pageId) } }}
                   onDragOver={(event) => event.preventDefault()}
                   onDrop={(event) => { event.preventDefault(); const dragged = dragRef.current; if (dragged?.type === 'element' && dragged.id && dragged.id !== element.id) { const other = state.elements.find((item) => item.id === dragged.id); if (other) updateElement(other.id, { zIndex: element.zIndex + 1 }) } }}
                 >
@@ -681,6 +728,7 @@ export function CampfireCanvasStudio() {
           {selectedElement ? <>
             <label className="studio-field">Element label<input value={selectedElement.label} onChange={(event) => updateElement(selectedElement.id, { label: event.target.value })} /></label>
             <label className="studio-field">Subtext / placeholder<input value={selectedElement.subtext} onChange={(event) => updateElement(selectedElement.id, { subtext: event.target.value, placeholder: event.target.value })} /></label>
+            <label className="studio-field">Icon / symbol<input value={selectedElement.icon} onChange={(event) => updateElement(selectedElement.id, { icon: event.target.value })} /></label>
             <div className="studio-fields-2">
               {(['x', 'y', 'width', 'height', 'zIndex'] as const).map((field) => <label className="studio-field" key={field}>{field === 'zIndex' ? 'Z-Index' : field.toUpperCase()}<input type="number" value={selectedElement[field]} onChange={(event) => updateElement(selectedElement.id, { [field]: Number(event.target.value) })} /></label>)}
             </div>
@@ -711,7 +759,7 @@ export function CampfireCanvasStudio() {
 
       {mode === 'preview' && !popupPageId && <button className="studio-preview-ai-trigger" onClick={() => setAiOpen((open) => !open)}><Bot size={16} /> AI Assistant</button>}
       {popupPageId && mode === 'preview' && <div className="studio-modal-backdrop" onClick={() => setPopupPageId('')}><div className="studio-popup" onClick={(event) => event.stopPropagation()}><button className="studio-popup-close" onClick={() => setPopupPageId('')}><X size={16} /></button><strong>{state.pages.find((page) => page.id === popupPageId)?.name}</strong><p>Popup page preview</p>{state.elements.filter((item) => item.pageId === popupPageId).map((item) => <div className="studio-popup-item" key={item.id}>{item.label}</div>)}</div></div>}
-      {aiOpen && <div className="studio-ai-drawer"><div><strong>🤖 Campfire AI</strong><button onClick={() => setAiOpen(false)}><X size={15} /></button></div><p>Context-aware assistant · local-first</p><textarea value={aiText} onChange={(event) => setAiText(event.target.value)} placeholder="Ask for a summary, code help, or next steps..." /><button onClick={() => setAiText((value) => value ? `Suggested next step: break “${value}” into one small, testable action.` : 'Start by describing the outcome you want. I can suggest a small first step.')}>Generate response</button><button onClick={() => { localStorage.setItem('campfire-vault-ai', JSON.stringify([{ title: 'Canvas AI note', content: aiText || 'AI note saved from Canvas Studio', savedAt: new Date().toISOString() }, ...JSON.parse(localStorage.getItem('campfire-vault-ai') ?? '[]') as unknown[]])); setStatus('AI output saved to Personal Vault') }}>Save to Personal Vault</button></div>}
+      {aiOpen && <div className="studio-ai-drawer"><div><strong>🤖 Campfire AI</strong><button onClick={() => setAiOpen(false)}><X size={15} /></button></div><p>Context-aware assistant · local-first</p><textarea value={aiText} onChange={(event) => setAiText(event.target.value)} placeholder="Ask for a summary, code help, or next steps..." /><button onClick={() => setAiText((value) => value ? `Suggested next step: break “${value}” into one small, testable action.` : 'Start by describing the outcome you want. I can suggest a small first step.')}>Generate response</button><button onClick={() => saveVaultItem('Canvas AI note', aiText || 'AI note saved from Canvas Studio')}>Save to Personal Vault</button></div>}
       {mode === 'preview' && <div className="studio-live-status">{status}</div>}
     </div>
   )

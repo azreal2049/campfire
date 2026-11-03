@@ -131,6 +131,15 @@
 .studio-widget-content p { margin: 0; }
 .studio-widget-content textarea { flex: 1; min-height: 40px; resize: none; }
 .studio-widget-content pre { overflow: auto; margin: 0; color: #a6e3a1; font: 9px ui-monospace, monospace; }
+.studio-ide-widget { min-height: 0; }
+.studio-ide-tabs { display: flex; flex-shrink: 0; gap: 3px; overflow-x: auto; }
+.studio-ide-tabs button, .studio-ide-controls select { border: 1px solid #303038; border-radius: 4px; background: #101014; padding: 4px 6px; color: #a5a5ae; font-size: 9px; }
+.studio-ide-tabs button.active { background: #23232a; color: #f4f4f5; }
+.studio-code-editor { flex: 1; min-height: 70px !important; resize: none; background: #09090d !important; color: #d7e3f4 !important; font: 10px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace !important; }
+.studio-ide-controls { display: flex; align-items: center; justify-content: space-between; gap: 5px; }
+.studio-ide-controls select { flex: 1; }
+.studio-ide-controls button { white-space: nowrap; }
+.studio-whiteboard-canvas { width: 100%; min-height: 60px; flex: 1; border: 1px solid #2a2a31; border-radius: 4px; background-color: #111115; background-image: radial-gradient(#393943 1px, transparent 1px); background-size: 14px 14px; cursor: crosshair; touch-action: none; }
 .studio-live-messages { flex: 1; overflow: auto; }.studio-live-messages p { margin: 4px 0; color: #b9b9c2; }
 .studio-widget-content form { display: flex; gap: 5px; }.studio-widget-content form input { flex: 1; min-width: 0; }
 .studio-timer { font: 24px ui-monospace, monospace; font-variant-numeric: tabular-nums; }
