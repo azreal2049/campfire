@@ -49,6 +49,46 @@ function saveBlueprintPlugin(): Plugin {
           response.end('Blueprint upload failed')
         })
       })
+      server.middlewares.use('/__save-canvas', (request, response) => {
+        if (request.method !== 'POST') {
+          response.statusCode = 405
+          response.setHeader('Allow', 'POST')
+          response.end('Method not allowed')
+          return
+        }
+        const chunks: Buffer[] = []
+        let size = 0
+        request.on('data', (chunk: Buffer) => {
+          size += chunk.length
+          if (size > 10 * 1024 * 1024) {
+            response.statusCode = 413
+            response.end('Canvas payload is too large')
+            request.destroy()
+            return
+          }
+          chunks.push(chunk)
+        })
+        request.on('end', () => {
+          try {
+            const payload = Buffer.concat(chunks).toString('utf8')
+            JSON.parse(payload)
+            writeFileSync(resolve(server.config.root, 'campfire-canvas.json'), payload, 'utf8')
+            response.statusCode = 200
+            response.setHeader('Content-Type', 'application/json')
+            response.end(JSON.stringify({ saved: true, file: 'campfire-canvas.json' }))
+          } catch (error) {
+            server.config.logger.error(`Could not save campfire-canvas.json: ${String(error)}`)
+            response.statusCode = 400
+            response.setHeader('Content-Type', 'application/json')
+            response.end(JSON.stringify({ saved: false, error: 'Invalid JSON or unable to write canvas state' }))
+          }
+        })
+        request.on('error', (error) => {
+          server.config.logger.error(`Canvas upload failed: ${error.message}`)
+          if (!response.headersSent) response.statusCode = 500
+          response.end('Canvas upload failed')
+        })
+      })
     },
   }
 }
