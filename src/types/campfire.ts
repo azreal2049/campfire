@@ -152,15 +152,18 @@ export interface CreateCampfireInput {
   durationMinutes: number
 }
 
-export type PageSlot = `page-${number}` | 'page-0' | 'page-signin' | 'page-lobby'
+export type WorkspaceView = 'chat' | 'workplace'
+export type PageSlot = `page-${number}` | 'page-0' | 'page-signin' | 'page-lobby' | 'page-chat' | 'page-workplace' | 'page-vault' | 'page-settings'
 
 export interface CampfireStore {
   rooms: CampfireRoom[]
   activeRoomId: string | null
   activePage: PageSlot
+  workspaceView: WorkspaceView
   isCreateModalOpen: boolean
   profile: CampfireProfile
   setActivePage: (page: PageSlot) => void
+  setActiveWorkspaceView: (view: WorkspaceView) => void
   setActiveRoom: (roomId: string) => void
   openCreateModal: () => void
   closeCreateModal: () => void
