@@ -129,21 +129,28 @@ function Send-Greeting {
   $webhookUrl = Get-PlainWebhook -EncryptedValue $Config.greetingsWebhook
   Assert-WebhookChannel -WebhookUrl $webhookUrl -ExpectedChannelId $greetingsChannelId
 
+  $sun = [char]::ConvertFromUtf32(0x2600)
+  $flower = [char]::ConvertFromUtf32(0x1F337)
+  $chick = [char]::ConvertFromUtf32(0x1F423)
+  $moon = [char]::ConvertFromUtf32(0x1F319)
+  $teddy = [char]::ConvertFromUtf32(0x1F9F8)
+  $sparkles = [char]::ConvertFromUtf32(0x2728)
+
   if ($Kind -eq 'GoodMorning') {
     $messages = @(
-      'Hope your morning feels soft, bright, and full of little reasons to smile. Have a lovely day! 🌷',
-      'A fresh new day is here—sending you a little sunshine and a big smile. You’ve got this! ☀️',
-      'Good morning! May today bring cozy moments, happy surprises, and all the good things you deserve. 🐣'
+      "Hope your morning feels soft, bright, and full of little reasons to smile. Have a lovely day! $flower",
+      "A fresh new day is here - sending you a little sunshine and a big smile. You've got this! $sun",
+      "Good morning! May today bring cozy moments, happy surprises, and all the good things you deserve. $chick"
     )
-    $title = 'Good morning, sweetheart ☀️'
+    $title = "Good morning, sweetheart $sun"
     $color = 0xFFD166
   } else {
     $messages = @(
-      'You made it through today—now it’s time to rest, recharge, and have the sweetest dreams. 🌙',
-      'The day is done, sweetheart. Get cozy, let the worries go, and sleep peacefully. 🧸',
-      'Sending a tiny bundle of hugs for a calm night and the loveliest dreams. Good night! ✨'
+      "You made it through today - now it's time to rest, recharge, and have the sweetest dreams. $moon",
+      "The day is done, sweetheart. Get cozy, let the worries go, and sleep peacefully. $teddy",
+      "Sending a tiny bundle of hugs for a calm night and the loveliest dreams. Good night! $sparkles"
     )
-    $title = 'Good night, sweetheart 🌙'
+    $title = "Good night, sweetheart $moon"
     $color = 0xC8B6FF
   }
 
@@ -153,7 +160,7 @@ function Send-Greeting {
     title = $title
     description = $message
     color = $color
-    footer = @{ text = "A little Campfire hello · $today" }
+    footer = @{ text = "A little Campfire hello - $today" }
   }
 
   Send-DiscordEmbeds `
@@ -261,18 +268,20 @@ function Send-CommitDigest {
           $subject = $subject.Substring(0, 697) + '...'
         }
         $embeds += @{
-          title = ('{0:D2} · {1}' -f ($index + 1), $commit.Sha.Substring(0, 7))
-          description = "**$($commit.Date)** · $subject`n`n**$($commit.Files) files** · $($commit.ChangedLines) lines changed"
+          title = ('{0:D2} | {1}' -f ($index + 1), $commit.Sha.Substring(0, 7))
+          description = "**$($commit.Date)** | $subject`n`n**$($commit.Files) files** | $($commit.ChangedLines) lines changed"
           color = 0xE87532
         }
       }
 
       $content = if ($offset -eq 0) {
-        "**Campfire · Big commits · $((Get-Date).ToString('yyyy-MM-dd'))**"
+        "**Campfire | Big commits | $((Get-Date).ToString('yyyy-MM-dd'))**"
       } else {
-        "**Campfire · Big commits · continued**"
+        '**Campfire | Big commits | continued**'
       }
       Send-DiscordEmbeds -WebhookUrl $webhookUrl -Embeds $embeds -Content $content
+      $Config.lastCommitSha = $largeCommits[$lastIndex].Sha
+      Save-Config -Value $Config
     }
     Write-ScheduleLog "Posted $($largeCommits.Count) feature-sized commit(s) to #commits."
   } else {

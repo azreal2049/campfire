@@ -110,7 +110,7 @@ foreach ($job in $schedule) {
 }
 
 Write-Output 'Installed three daily tasks (India Standard Time):'
-Write-Output '  8:03 AM  — sweetheart good-morning greeting in iyra'
-Write-Output '  9:30 PM  — feature-sized commit digest in #commits'
-Write-Output ' 10:00 PM  — sweetheart good-night greeting in iyra'
+Write-Output '  8:03 AM  - sweetheart good-morning greeting in iyra'
+Write-Output '  9:30 PM  - feature-sized commit digest in #commits'
+Write-Output ' 10:00 PM  - sweetheart good-night greeting in iyra'
 Write-Output 'Tasks run while this Windows user is signed in and the PC is on.'
