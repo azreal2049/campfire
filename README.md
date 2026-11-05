@@ -119,8 +119,6 @@ npm run dev       # Start the Vite development server
 npm run autosync  # Run one safe push check for committed main changes
 npm run autosync:install   # Windows: schedule checks every 24 hours
 npm run autosync:uninstall # Windows: remove the scheduled task
-npm run discord-schedule:install   # Windows: schedule separate Discord updates and greetings
-npm run discord-schedule:uninstall # Windows: remove the Discord schedule
 npm run build     # TypeScript project build and production Vite build
 npm run lint      # Run Oxlint
 npm run preview   # Preview the production build locally
@@ -139,8 +137,6 @@ The UI is currently local-first, so Git is the source-control collaboration path
 On Windows, `npm run autosync:install` registers a per-user Task Scheduler task that checks once every 24 hours and pushes **already-committed changes on `main` only** to `origin/main`. It does not stage files, create commits, or push other branches. If the remote has commits missing locally, the task skips the push and asks you to reconcile the branch manually. The task uses the current user's Git credentials and runs while that user is signed in. Use `npm run autosync:uninstall` to remove it. `npm run autosync` runs a single check immediately.
 
 Review and commit changes normally; uncommitted and untracked files are never uploaded by autosync. Do not commit secrets or unfinished work to `main`. VS Code auto-fetch is enabled independently of this push schedule.
-
-On Windows, `npm run discord-schedule:install` interactively asks for two Discord webhook URLs without echoing them: a rotated webhook bound to `#commits` and a separate webhook bound to channel `1567719634830893126` for greetings. It verifies both destinations before saving webhook URLs encrypted for the current Windows user outside the repository. The per-user tasks post a digest at 9:30 PM containing new commits that change at least three files or at least 100 lines, a good-morning greeting at 8:03 AM, and a good-night greeting at 10:00 PM. Greeting posts mention SVJ (`1323996767095885830`). Times use India Standard Time; the PC must be on and the user signed in. Use `npm run discord-schedule:uninstall` to remove the tasks and encrypted webhook configuration. Rotate any webhook URL that has been shared publicly or in chat before installing.
 
 ## Current boundaries
 
