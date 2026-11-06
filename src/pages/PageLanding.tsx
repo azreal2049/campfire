@@ -1,184 +1,171 @@
-import { ArrowRight, Flame } from 'lucide-react'
+import { ArrowRight, Search, Sparkles } from 'lucide-react'
 import { useCampfireStore } from '../store/useCampfireStore'
-import './PageLanding.css'
 
-const navLinks = ['Home', 'Features', 'Coverage', 'Company', 'Pricing'] as const
+const components = [
+  { name: 'Button', category: 'Primitives', description: 'Accessible button with variants' },
+  { name: 'Card', category: 'Layout', description: 'Flexible content container' },
+  { name: 'Dialog', category: 'Overlay', description: 'Modal dialog with focus trap' },
+  { name: 'Input', category: 'Form', description: 'Text input with validation' },
+  { name: 'Select', category: 'Form', description: 'Dropdown selection menu' },
+  { name: 'Table', category: 'Data', description: 'Sortable data table' },
+  { name: 'Tabs', category: 'Navigation', description: 'Tabbed content panels' },
+  { name: 'Toast', category: 'Feedback', description: 'Notification toasts' },
+  { name: 'Tooltip', category: 'Overlay', description: 'Contextual hover info' },
+  { name: 'Avatar', category: 'Display', description: 'User profile images' },
+  { name: 'Badge', category: 'Display', description: 'Status indicators' },
+  { name: 'Skeleton', category: 'Feedback', description: 'Loading placeholders' },
+]
 
-function NeuralFigure() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="landing-neural-figure"
-      fill="none"
-      viewBox="0 0 560 640"
-    >
-      <defs>
-        <radialGradient id="neuralCore">
-          <stop offset="0" stopColor="#1478c9" stopOpacity="0" />
-          <stop offset=".72" stopColor="#1689db" stopOpacity=".015" />
-          <stop offset="1" stopColor="#48c5ff" stopOpacity=".28" />
-        </radialGradient>
-        <linearGradient id="neuralEdge" x1="78" x2="482" y1="98" y2="574" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#4abaff" stopOpacity=".12" />
-          <stop offset=".46" stopColor="#67d4ff" stopOpacity=".92" />
-          <stop offset="1" stopColor="#218de1" stopOpacity=".18" />
-        </linearGradient>
-        <filter id="neuralGlow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="7" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        <pattern id="neuralDots" width="14" height="14" patternUnits="userSpaceOnUse">
-          <circle cx="2" cy="2" r="1.25" fill="#65caff" fillOpacity=".46" />
-          <circle cx="10" cy="8" r=".7" fill="#9adeff" fillOpacity=".3" />
-        </pattern>
-        <clipPath id="headShape">
-          <path d="M280 50C180 50 110 118 99 224L81 368C76 423 106 467 143 492L159 548C165 573 189 590 218 592H342C371 590 395 573 401 548L417 492C454 467 484 423 479 368L461 224C450 118 380 50 280 50Z" />
-        </clipPath>
-      </defs>
-      <g className="neural-orbit neural-orbit-one">
-        <ellipse cx="280" cy="320" rx="218" ry="122" stroke="#36a7f5" strokeOpacity=".28" />
-      </g>
-      <g className="neural-orbit neural-orbit-two">
-        <ellipse cx="280" cy="320" rx="198" ry="112" stroke="#5bc9ff" strokeOpacity=".2" />
-      </g>
-      <g clipPath="url(#headShape)">
-        <rect x="70" y="40" width="420" height="570" fill="url(#neuralCore)" />
-        <rect x="70" y="40" width="420" height="570" fill="url(#neuralDots)" opacity=".26" />
-        <path
-          d="M280 50C180 50 110 118 99 224L81 368C76 423 106 467 143 492L159 548C165 573 189 590 218 592H342C371 590 395 573 401 548L417 492C454 467 484 423 479 368L461 224C450 118 380 50 280 50Z"
-          stroke="url(#neuralEdge)"
-          strokeWidth="3"
-          filter="url(#neuralGlow)"
-        />
-        <path d="M165 212Q201 185 237 212M323 212Q359 185 395 212" stroke="#63caff" strokeOpacity=".42" strokeWidth="2" />
-        <path d="M190 271Q211 257 232 271M328 271Q349 257 370 271" stroke="#77d6ff" strokeOpacity=".65" strokeWidth="2" />
-        <path d="M280 252L263 338L285 350" stroke="#54b9fb" strokeOpacity=".42" strokeWidth="2" />
-        <path d="M224 405Q280 438 336 405" stroke="#54b9fb" strokeOpacity=".42" strokeWidth="2" />
-        <path d="M190 466Q280 508 370 466" stroke="#3a9eea" strokeOpacity=".35" />
-      </g>
-      <g className="neural-pulse" filter="url(#neuralGlow)">
-        <circle cx="142" cy="194" r="2.5" fill="#a4e5ff" />
-        <circle cx="422" cy="241" r="2" fill="#a4e5ff" />
-        <circle cx="158" cy="418" r="2.5" fill="#8bdcff" />
-        <circle cx="390" cy="455" r="2" fill="#a4e5ff" />
-        <circle cx="280" cy="106" r="2.5" fill="#d4f4ff" />
-        <circle cx="282" cy="563" r="2" fill="#a4e5ff" />
-      </g>
-    </svg>
-  )
-}
+const categories = ['All', 'Primitives', 'Layout', 'Form', 'Overlay', 'Navigation', 'Data', 'Display', 'Feedback']
 
 export function PageLanding() {
   const setActivePage = useCampfireStore((state) => state.setActivePage)
 
   return (
-    <div className="landing-page min-h-screen overflow-hidden bg-[#050608] text-white">
-      <header className="landing-nav fixed inset-x-0 top-0 z-20 flex h-[76px] items-center justify-between border-b border-white/[0.06] bg-[#070709]/70 px-6 backdrop-blur-2xl md:px-16">
-        <a
-          aria-label="Campfire home"
-          className="flex items-center gap-2.5 text-lg font-bold tracking-tight"
-          href="#home"
-        >
-          <Flame aria-hidden="true" className="text-orange-200 drop-shadow-[0_0_12px_rgba(251,146,60,0.55)]" size={21} />
-          <span>Campfire</span>
-        </a>
-
-        <nav
-          aria-label="Main navigation"
-          className="hidden items-center gap-8 rounded-full border border-white/[0.06] bg-white/[0.02] px-6 py-2 text-sm font-medium text-zinc-400 md:flex"
-        >
-          {navLinks.map((link) => (
-            <a
-              className="transition-colors duration-200 hover:text-white"
-              href={`#${link.toLowerCase()}`}
-              key={link}
-            >
-              {link}
+    <div className="min-h-screen bg-[#050505] text-white">
+      {/* Navigation */}
+      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#050505]/80 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+          <div className="flex items-center gap-8">
+            <a href="#" className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-white">
+                <Sparkles className="h-4 w-4 text-black" />
+              </div>
+              <span className="text-sm font-semibold tracking-tight">Campfire</span>
             </a>
-          ))}
-        </nav>
-
-        <button
-          className="landing-action rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#09090B] shadow-[0_0_25px_rgba(255,255,255,0.25)] hover:scale-[1.02] hover:bg-zinc-200 active:scale-[0.98]"
-          onClick={() => setActivePage('page-signin')}
-          type="button"
-        >
-          Get started
-        </button>
+            <nav className="hidden items-center gap-6 text-sm text-neutral-400 md:flex">
+              <a href="#components" className="transition-colors hover:text-white">Components</a>
+              <a href="#templates" className="transition-colors hover:text-white">Templates</a>
+              <a href="#docs" className="transition-colors hover:text-white">Docs</a>
+            </nav>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="hidden items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-neutral-400 transition-colors hover:border-white/[0.15] hover:text-white md:flex">
+              <Search className="h-3.5 w-3.5" />
+              Search components...
+              <kbd className="ml-4 rounded border border-white/[0.1] px-1.5 py-0.5 text-[10px] text-neutral-500">⌘K</kbd>
+            </button>
+            <button
+              className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition-opacity hover:opacity-90"
+              onClick={() => setActivePage('page-signin')}
+            >
+              Get Started
+            </button>
+          </div>
+        </div>
       </header>
 
-      <main>
-        <section
-          aria-labelledby="landing-title"
-          className="landing-hero relative isolate flex min-h-screen items-center justify-center overflow-hidden px-6 py-[76px] text-center"
-          id="home"
-        >
-          <div aria-hidden="true" className="landing-starfield absolute inset-0 -z-30" />
-          <div aria-hidden="true" className="landing-ambient absolute left-1/2 top-[46%] -z-20" />
-          <NeuralFigure />
-          <div className="landing-copy mx-auto max-w-[880px]">
-            <p className="mb-6 text-[11px] font-medium uppercase tracking-[0.2em] text-sky-100/65">
-              Focus feels better together
-            </p>
-            <h1
-              className="text-[clamp(2.5rem,6.2vw,5rem)] font-semibold leading-[1.08] tracking-[-0.055em] text-[#F5F7FA]"
-              id="landing-title"
-            >
-              Redefining Deep Work
-              <br />
-              with <span className="landing-heading-accent">Collaborative Rooms</span>
-            </h1>
-            <p className="mx-auto mt-5 max-w-[560px] text-sm leading-6 text-zinc-400 sm:text-base sm:leading-7">
-              A focused space to study, build, and make meaningful progress — together.
-            </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <button
-                className="landing-action group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-[#09090B] shadow-[0_0_40px_rgba(255,255,255,0.2)] hover:bg-zinc-200 active:scale-[0.98]"
-                onClick={() => setActivePage('page-signin')}
-                type="button"
-              >
-                Enter Campfire
-                <ArrowRight
-                  aria-hidden="true"
-                  className="transition-transform duration-200 group-hover:translate-x-1"
-                  size={16}
-                />
-              </button>
-              <a
-                className="landing-action inline-flex min-h-12 items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.04] px-7 py-3.5 text-sm text-white hover:border-white/[0.2] hover:bg-white/[0.08] active:scale-[0.98]"
-                href="#features"
-              >
-                Explore Roadmap
-              </a>
-            </div>
+      {/* Hero */}
+      <section className="relative overflow-hidden border-b border-white/[0.06]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,119,198,0.15),transparent)]" />
+        <div className="relative mx-auto max-w-7xl px-6 py-24 text-center md:py-32">
+          <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-1.5 text-xs text-neutral-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            v2.0 — New components added
           </div>
-        </section>
+          <h1 className="mx-auto max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">
+            Build your workspace with
+            <span className="bg-gradient-to-r from-white via-neutral-300 to-neutral-500 bg-clip-text text-transparent"> beautiful components</span>
+          </h1>
+          <p className="mx-auto mt-5 max-w-xl text-base text-neutral-400 md:text-lg">
+            A focused space to study, build, and make meaningful progress — together. Start your session now.
+          </p>
+          <div className="mt-8 flex items-center justify-center gap-3">
+            <button
+              className="group inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-medium text-black transition-all hover:opacity-90"
+              onClick={() => setActivePage('page-signin')}
+            >
+              Enter Campfire
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </button>
+            <button
+              className="inline-flex items-center gap-2 rounded-lg border border-white/[0.1] bg-white/[0.03] px-6 py-3 text-sm text-white transition-colors hover:border-white/[0.2] hover:bg-white/[0.06]"
+              onClick={() => setActivePage('page-signin')}
+            >
+              Browse Rooms
+            </button>
+          </div>
+        </div>
+      </section>
 
-        <section
-          aria-label="Campfire features"
-          className="landing-features mx-auto grid max-w-5xl scroll-mt-28 grid-cols-1 gap-8 px-6 pb-20 sm:grid-cols-3"
-          id="features"
-        >
-          <article id="coverage">
-            <span>01 / FOCUS</span>
-            <h2>Find your rhythm.</h2>
-            <p>Timers and quiet accountability help make deep work easier to begin.</p>
-          </article>
-          <article id="company">
-            <span>02 / TOGETHER</span>
-            <h2>Make it shared.</h2>
-            <p>Join a small room, bring your tools, and work alongside other people.</p>
-          </article>
-          <article id="pricing">
-            <span>03 / MOMENTUM</span>
-            <h2>Keep going gently.</h2>
-            <p>Track small wins without turning focus into another noisy feed.</p>
-          </article>
-        </section>
-      </main>
+      {/* Components Grid */}
+      <section className="mx-auto max-w-7xl px-6 py-16" id="components">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight">Components</h2>
+            <p className="mt-1 text-sm text-neutral-400">Explore the building blocks of your workspace</p>
+          </div>
+        </div>
+
+        {/* Category Filter */}
+        <div className="mb-8 flex flex-wrap gap-2">
+          {categories.map((cat, i) => (
+            <button
+              key={cat}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                i === 0
+                  ? 'bg-white text-black'
+                  : 'border border-white/[0.08] bg-white/[0.02] text-neutral-400 hover:border-white/[0.15] hover:text-white'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Grid */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {components.map((component) => (
+            <button
+              key={component.name}
+              className="group rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 text-left transition-all hover:border-white/[0.12] hover:bg-white/[0.04]"
+              onClick={() => setActivePage('page-signin')}
+            >
+              <div className="mb-4 flex h-24 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.02]">
+                <div className="h-8 w-16 rounded-md border border-white/[0.1] bg-white/[0.05]" />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">{component.name}</span>
+                <span className="rounded-full border border-white/[0.08] px-2 py-0.5 text-[10px] text-neutral-500">
+                  {component.category}
+                </span>
+              </div>
+              <p className="mt-1.5 text-xs text-neutral-500">{component.description}</p>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="border-t border-white/[0.06]">
+        <div className="mx-auto max-w-7xl px-6 py-20 text-center">
+          <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+            Ready to focus?
+          </h2>
+          <p className="mx-auto mt-3 max-w-md text-sm text-neutral-400">
+            Join a room, set your timer, and work alongside others in a distraction-free environment.
+          </p>
+          <button
+            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-medium text-black transition-opacity hover:opacity-90"
+            onClick={() => setActivePage('page-signin')}
+          >
+            Start a Session
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-white/[0.06] py-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 text-xs text-neutral-500">
+          <span>© 2026 Campfire</span>
+          <div className="flex gap-6">
+            <a href="#" className="transition-colors hover:text-white">Privacy</a>
+            <a href="#" className="transition-colors hover:text-white">Terms</a>
+            <a href="#" className="transition-colors hover:text-white">GitHub</a>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

@@ -1,5 +1,6 @@
-import { Download, Folder, Search, Sparkles } from 'lucide-react'
+import { ArrowLeft, Download, Folder, Search, Sparkles } from 'lucide-react'
 import { useState } from 'react'
+import { useCampfireStore } from '../store/useCampfireStore'
 
 const vaultFolders = [
   { name: 'Code Projects', count: 12 },
@@ -10,6 +11,7 @@ const vaultFolders = [
 
 export function PageVault() {
   const [query, setQuery] = useState('')
+  const setActivePage = useCampfireStore((state) => state.setActivePage)
 
   const filtered = vaultFolders.filter((folder) => folder.name.toLowerCase().includes(query.toLowerCase()))
 
@@ -24,54 +26,77 @@ export function PageVault() {
   }
 
   return (
-    <main className="min-h-screen bg-[#070709] text-white">
-      <div className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Personal vault</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight">Saved projects and AI notes</h1>
+    <div className="min-h-screen bg-[#050505] text-white">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#050505]/80 backdrop-blur-xl">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <button
+              className="rounded-lg p-1.5 text-neutral-400 transition-colors hover:bg-white/[0.04] hover:text-white"
+              onClick={() => setActivePage('page-lobby')}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <h1 className="text-sm font-medium">Personal Vault</h1>
           </div>
-          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-2">
-            <Search className="h-4 w-4 text-zinc-500" />
+          <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-1.5">
+            <Search className="h-3.5 w-3.5 text-neutral-500" />
             <input
-              className="w-64 bg-transparent text-sm text-white outline-none placeholder:text-zinc-500"
+              className="w-48 bg-transparent text-xs text-white outline-none placeholder:text-neutral-600"
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search vault..."
               value={query}
             />
           </div>
         </div>
+      </header>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <main className="mx-auto max-w-7xl px-6 py-8">
+        {/* Folders Grid */}
+        <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {filtered.map((folder) => (
-            <article className="rounded-3xl border border-white/10 bg-[#111115] p-4" key={folder.name}>
+            <div
+              key={folder.name}
+              className="group rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 transition-all hover:border-white/[0.12] hover:bg-white/[0.04]"
+            >
               <div className="mb-4 flex items-center justify-between">
-                <Folder className="h-8 w-8 text-orange-200" />
-                <span className="rounded-full border border-white/10 bg-white/[0.02] px-2 py-1 text-xs text-zinc-300">{folder.count}</span>
+                <Folder className="h-6 w-6 text-neutral-500 transition-colors group-hover:text-white" />
+                <span className="rounded-full border border-white/[0.08] px-2 py-0.5 text-[10px] text-neutral-500">
+                  {folder.count}
+                </span>
               </div>
-              <h2 className="text-lg font-semibold">{folder.name}</h2>
-              <p className="mt-2 text-sm text-zinc-400">Structured notes, exports, and snapshots saved from your rooms.</p>
-              <button className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-[#09090B]" type="button" onClick={() => downloadItem(folder.name)}>
-                <Download className="h-4 w-4" /> Download</button>
-            </article>
+              <h2 className="text-sm font-medium">{folder.name}</h2>
+              <p className="mt-1.5 text-xs text-neutral-500">
+                Structured notes, exports, and snapshots.
+              </p>
+              <button
+                className="mt-4 flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-2.5 py-1.5 text-xs text-neutral-300 transition-colors hover:border-white/[0.15] hover:text-white"
+                onClick={() => downloadItem(folder.name)}
+              >
+                <Download className="h-3 w-3" />
+                Export
+              </button>
+            </div>
           ))}
         </div>
 
-        <div className="mt-8 rounded-3xl border border-white/10 bg-[#111115] p-4">
-          <div className="mb-4 flex items-center gap-2 text-sm text-zinc-300">
-            <Sparkles className="h-4 w-4 text-orange-200" />
-            Recent items
-          </div>
-          <div className="grid gap-3 md:grid-cols-3">
-            {['Project briefing.md', 'Chem summary.json', 'AI summary.txt'].map((item) => (
-              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3 text-sm" key={item}>
-                <p className="font-medium text-zinc-100">{item}</p>
-                <p className="mt-1 text-xs text-zinc-500">Updated today</p>
-              </div>
-            ))}
-          </div>
+        {/* Recent Items */}
+        <div className="mb-4 flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-neutral-500" />
+          <h2 className="text-sm font-medium text-neutral-300">Recent items</h2>
         </div>
-      </div>
-    </main>
+        <div className="grid gap-3 md:grid-cols-3">
+          {['Project briefing.md', 'Chem summary.json', 'AI summary.txt'].map((item) => (
+            <div
+              key={item}
+              className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 transition-colors hover:border-white/[0.12]"
+            >
+              <p className="text-sm font-medium">{item}</p>
+              <p className="mt-1 text-xs text-neutral-500">Updated today</p>
+            </div>
+          ))}
+        </div>
+      </main>
+    </div>
   )
 }
