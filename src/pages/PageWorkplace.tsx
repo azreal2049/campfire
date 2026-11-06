@@ -55,7 +55,7 @@ export function PageWorkplace() {
           <div className="flex items-center gap-3">
             <button
               className="rounded-lg p-1.5 text-neutral-400 transition-colors hover:bg-white/[0.04] hover:text-white"
-              onClick={() => setActivePage('page-lobby')}
+              onClick={() => setActivePage('page-home')}
             >
               <ArrowLeft className="h-4 w-4" />
             </button>

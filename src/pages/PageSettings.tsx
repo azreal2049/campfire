@@ -10,9 +10,9 @@ export function PageSettings() {
       <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#050505]/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-6">
           <button
-            className="rounded-lg p-1.5 text-neutral-400 transition-colors hover:bg-white/[0.04] hover:text-white"
-            onClick={() => setActivePage('page-lobby')}
-          >
+                        className="rounded-lg p-1.5 text-neutral-400 transition-colors hover:bg-white/[0.04] hover:text-white"
+                        onClick={() => setActivePage('page-home')}
+                      >
             <ArrowLeft className="h-4 w-4" />
           </button>
           <h1 className="text-sm font-medium">Settings</h1>

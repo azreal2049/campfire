@@ -15,24 +15,24 @@ export function PageSignIn() {
   const [role, setRole] = useState<CampfireRole>(initialRole)
 
   function handleEnter(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const name = displayName.trim()
-    const handle = username.trim().replace(/^@+/, '')
-    if (!name || !handle) return
-
-    updateProfile({ displayName: name, username: handle, role, status: 'online' })
-    setActiveSupplyTab(role === 'developer' ? 'dev-rig' : 'solvely')
-    setActivePage('page-lobby')
-  }
+      event.preventDefault()
+      const name = displayName.trim()
+      const handle = username.trim().replace(/^@+/, '')
+      if (!name || !handle) return
+  
+      updateProfile({ displayName: name, username: handle, role, status: 'online' })
+      setActiveSupplyTab(role === 'developer' ? 'dev-rig' : 'solvely')
+      useCampfireStore.getState().setAuthenticated(true)
+    }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#050505] px-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <button
-          className="mx-auto mb-8 flex items-center gap-2"
-          onClick={() => setActivePage('page-0')}
-        >
+                  className="mx-auto mb-8 flex items-center gap-2"
+                  onClick={() => setActivePage('page-home')}
+                >
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white">
             <Sparkles className="h-4 w-4 text-black" />
           </div>
