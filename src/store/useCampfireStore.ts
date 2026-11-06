@@ -301,12 +301,25 @@ print(max_sliding_window([1,3,-1,-3,5,3,6,7], 3))`,
 
 const FUEL_SECONDS = 15 * 60
 
+const AUTH_KEY = 'campfire_is_authenticated'
+
+function readStoredAuth(): boolean {
+  try {
+    const raw = localStorage.getItem(AUTH_KEY)
+    if (raw === null) return true // default: authenticated, boot straight into Home
+    return raw === 'true'
+  } catch {
+    return true
+  }
+}
+
 export const useCampfireStore = create<CampfireStore>((set, get) => ({
   rooms: buildDefaultRooms(),
   activeRoomId: 'room_python_dsa',
-  activePage: 'page-signin',
+  activePage: 'page-home',
   workspaceView: 'chat',
   isCreateModalOpen: false,
+  isAuthenticated: readStoredAuth(),
   profile: {
     displayName: 'You', username: 'you', role: 'developer', pronouns: '', bio: '',
     customStatus: '', avatarInitials: 'YO', avatarColor: AVATAR_COLORS[2],
@@ -320,6 +333,34 @@ export const useCampfireStore = create<CampfireStore>((set, get) => ({
   },
 
   setActivePage: (page) => set({ activePage: page }),
+  setAuthenticated: (value) => {
+    try {
+      localStorage.setItem(AUTH_KEY, String(value))
+    } catch {
+      // storage unavailable — auth still works for the session
+    }
+    set({ isAuthenticated: value, activePage: value ? 'page-home' : 'page-signin' })
+  },
+  login: (displayName, username, role) => {
+    try {
+      localStorage.setItem(AUTH_KEY, 'true')
+    } catch {
+      // ignore
+    }
+    set((state) => ({
+      isAuthenticated: true,
+      profile: { ...state.profile, displayName, username, role, status: 'online' },
+      activePage: 'page-home',
+    }))
+  },
+  logout: () => {
+    try {
+      localStorage.setItem(AUTH_KEY, 'false')
+    } catch {
+      // ignore
+    }
+    set({ isAuthenticated: false, activePage: 'page-signin' })
+  },
   setActiveWorkspaceView: (view) => set({ workspaceView: view, activePage: view === 'chat' ? 'page-chat' : 'page-workplace' }),
   setActiveRoom: (roomId) => set({ activeRoomId: roomId }),
 

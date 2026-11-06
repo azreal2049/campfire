@@ -153,7 +153,18 @@ export interface CreateCampfireInput {
 }
 
 export type WorkspaceView = 'chat' | 'workplace'
-export type PageSlot = `page-${number}` | 'page-0' | 'page-signin' | 'page-lobby' | 'page-chat' | 'page-workplace' | 'page-vault' | 'page-settings'
+
+/** All navigable page slots in the app. */
+export type PageSlot =
+  | 'page-home'
+  | 'page-signin'
+  | 'page-chat'
+  | 'page-workplace'
+  | 'page-friends'
+  | 'page-shop'
+  | 'page-vault'
+  | 'page-user-settings'
+  | 'page-app-settings'
 
 export interface CampfireStore {
   rooms: CampfireRoom[]
@@ -161,8 +172,12 @@ export interface CampfireStore {
   activePage: PageSlot
   workspaceView: WorkspaceView
   isCreateModalOpen: boolean
+  isAuthenticated: boolean
   profile: CampfireProfile
   setActivePage: (page: PageSlot) => void
+  setAuthenticated: (value: boolean) => void
+  login: (displayName: string, username: string, role: CampfireRole) => void
+  logout: () => void
   setActiveWorkspaceView: (view: WorkspaceView) => void
   setActiveRoom: (roomId: string) => void
   openCreateModal: () => void
