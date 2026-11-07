@@ -1,70 +1,46 @@
 interface DevGridProps {
-  columns?: number
-  rows?: number
   cellSize?: number
-  gap?: number
+  majorEvery?: number
   color?: string
-  showLabels?: boolean
+  majorColor?: string
   className?: string
   children?: React.ReactNode
 }
 
 export function DevGrid({
-  columns = 12,
-  rows = 8,
-  cellSize = 40,
-  gap = 8,
-  color = 'rgba(255,255,255,0.08)',
-  showLabels = false,
+  cellSize = 12,
+  majorEvery = 5,
+  color = 'rgba(255,255,255,0.05)',
+  majorColor = 'rgba(255,255,255,0.10)',
   className,
   children,
 }: DevGridProps) {
-  const cells: { x: number; y: number }[] = []
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < columns; x++) {
-      cells.push({ x, y })
-    }
-  }
+  const minorSize = cellSize
+  const majorSize = cellSize * majorEvery
 
   return (
     <div
       className={className}
       style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${columns}, ${cellSize}px)`,
-        gridTemplateRows: `repeat(${rows}, ${cellSize}px)`,
-        gap: `${gap}px`,
-        padding: `${gap}px`,
         position: 'relative',
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#0a0a0a',
+        backgroundImage: [
+          `linear-gradient(to right, ${color} 1px, transparent 1px)`,
+          `linear-gradient(to bottom, ${color} 1px, transparent 1px)`,
+          `linear-gradient(to right, ${majorColor} 1px, transparent 1px)`,
+          `linear-gradient(to bottom, ${majorColor} 1px, transparent 1px)`,
+        ].join(','),
+        backgroundSize: `
+          ${minorSize}px ${minorSize}px,
+          ${minorSize}px ${minorSize}px,
+          ${majorSize}px ${majorSize}px,
+          ${majorSize}px ${majorSize}px
+        `,
+        backgroundPosition: '0 0, 0 0, 0 0, 0 0',
       }}
     >
-      {cells.map((cell, i) => (
-        <div
-          key={i}
-          style={{
-            border: `1px solid ${color}`,
-            background: 'rgba(255,255,255,0.01)',
-            position: 'relative',
-            boxSizing: 'border-box',
-          }}
-        >
-          {showLabels && (
-            <span
-              style={{
-                position: 'absolute',
-                top: 2,
-                left: 2,
-                fontSize: 8,
-                color: 'rgba(255,255,255,0.3)',
-                fontFamily: 'monospace',
-                lineHeight: 1,
-              }}
-            >
-              {cell.x},{cell.y}
-            </span>
-          )}
-        </div>
-      ))}
       {children}
     </div>
   )
