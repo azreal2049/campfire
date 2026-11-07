@@ -3,7 +3,7 @@ import { AppShell } from './components/AppShell'
 import { GlobalAIBot } from './components/GlobalAIBot'
 import { DevPageSwitcher } from './components/DevPageSwitcher'
 import { LitACampfireModal } from './components/LitACampfireModal'
-import { AnimatedBackground } from './components/AnimatedBackground'
+import { ProfoundBackground } from './components/ProfoundBackground'
 
 import { PageLanding } from './pages/PageLanding'
 import { PageHomeLobby } from './pages/PageHomeLobby'
@@ -23,7 +23,7 @@ export default function App() {
   if (!isAuthenticated) {
     return (
       <>
-        <AnimatedBackground />
+        <ProfoundBackground />
         <PageLanding />
       </>
     )
@@ -32,7 +32,7 @@ export default function App() {
   if (activePage === 'page-signin') {
     return (
       <>
-        <AnimatedBackground />
+        <ProfoundBackground />
         <PageSignIn />
       </>
     )
@@ -54,7 +54,7 @@ export default function App() {
 
   return (
     <AppShell>
-      <AnimatedBackground />
+      <ProfoundBackground />
       {renderPage()}
       <GlobalAIBot />
       <LitACampfireModal />
