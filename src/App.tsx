@@ -3,6 +3,7 @@ import { AppShell } from './components/AppShell'
 import { GlobalAIBot } from './components/GlobalAIBot'
 import { DevPageSwitcher } from './components/DevPageSwitcher'
 import { LitACampfireModal } from './components/LitACampfireModal'
+import { AnimatedBackground } from './components/AnimatedBackground'
 
 import { PageLanding } from './pages/PageLanding'
 import { PageHomeLobby } from './pages/PageHomeLobby'
@@ -20,11 +21,21 @@ export default function App() {
   const isAuthenticated = useCampfireStore((state) => state.isAuthenticated)
 
   if (!isAuthenticated) {
-    return <PageLanding />
+    return (
+      <>
+        <AnimatedBackground />
+        <PageLanding />
+      </>
+    )
   }
 
   if (activePage === 'page-signin') {
-    return <PageSignIn />
+    return (
+      <>
+        <AnimatedBackground />
+        <PageSignIn />
+      </>
+    )
   }
 
   function renderPage() {
@@ -43,6 +54,7 @@ export default function App() {
 
   return (
     <AppShell>
+      <AnimatedBackground />
       {renderPage()}
       <GlobalAIBot />
       <LitACampfireModal />
