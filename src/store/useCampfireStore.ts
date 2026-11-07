@@ -315,9 +315,9 @@ function readStoredAuth(): boolean {
 
 export const useCampfireStore = create<CampfireStore>((set, get) => ({
   rooms: buildDefaultRooms(),
-  activeRoomId: 'room_python_dsa',
-  activePage: 'page-home',
-  workspaceView: 'chat',
+    activeRoomId: 'room_python_dsa',
+    activePage: 'page-landing',
+    workspaceView: 'chat',
   isCreateModalOpen: false,
   isAuthenticated: readStoredAuth(),
   profile: {

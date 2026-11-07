@@ -156,6 +156,7 @@ export type WorkspaceView = 'chat' | 'workplace'
 
 /** All navigable page slots in the app. */
 export type PageSlot =
+  | 'page-landing'
   | 'page-home'
   | 'page-signin'
   | 'page-chat'

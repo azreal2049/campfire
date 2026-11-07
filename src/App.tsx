@@ -4,6 +4,7 @@ import { GlobalAIBot } from './components/GlobalAIBot'
 import { DevPageSwitcher } from './components/DevPageSwitcher'
 import { LitACampfireModal } from './components/LitACampfireModal'
 
+import { PageLanding } from './pages/PageLanding'
 import { PageHomeLobby } from './pages/PageHomeLobby'
 import { PageChat } from './pages/PageChat'
 import { PageWorkplace } from './pages/PageWorkplace'
@@ -18,7 +19,11 @@ export default function App() {
   const activePage = useCampfireStore((state) => state.activePage)
   const isAuthenticated = useCampfireStore((state) => state.isAuthenticated)
 
-  if (!isAuthenticated || activePage === 'page-signin') {
+  if (!isAuthenticated) {
+    return <PageLanding />
+  }
+
+  if (activePage === 'page-signin') {
     return <PageSignIn />
   }
 
