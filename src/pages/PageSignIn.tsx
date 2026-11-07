@@ -1,6 +1,6 @@
 export function PageSignIn() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#050505] px-4">
+    <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-6">
           <h1 className="text-lg font-semibold text-white">Welcome back</h1>
