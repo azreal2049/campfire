@@ -1,4 +1,5 @@
 import { useCampfireStore } from '../store/useCampfireStore'
+import { ThreeDPaper } from '../components/ThreeDPaper'
 
 export function PageHomeLobby() {
   const profile = useCampfireStore((state) => state.profile)
@@ -10,8 +11,9 @@ export function PageHomeLobby() {
   const activeRoom = rooms.find((r) => r.id === useCampfireStore.getState().activeRoomId) ?? rooms[0]
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
-      <div className="flex h-full">
+    <div className="relative min-h-screen bg-[#050505] text-white">
+      <ThreeDPaper word={profile.displayName} className="absolute inset-0 z-0" />
+      <div className="relative z-10 flex h-full">
         {/* Left Area: Clean, open negative space (zero clutter) */}
         <div className="hidden flex-1 flex-col items-center justify-center border-r border-white/[0.06] lg:flex">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.02]">
