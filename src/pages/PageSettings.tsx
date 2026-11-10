@@ -1,30 +1,18 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import {
-  Activity,
-  AudioLines,
   BookOpen,
-  Check,
   ChevronDown,
   ChevronRight,
   Code2,
   ExternalLink,
-  Flame,
-  Github,
   Globe,
   HardDrive,
-  Laptop,
-  LoaderCircle,
   LockKeyhole,
   MessageCircle,
   Plus,
-  Radio,
   RefreshCw,
   Search,
-  Server,
-  Settings2,
-  Shield,
   Trash2,
-  UserRound,
   Volume2,
   X,
   Zap,
@@ -84,7 +72,7 @@ function SettingRow({
 
 function IntegrationMark({ id }: { id: string }) {
   const className = 'h-5 w-5 text-zinc-300'
-  if (id === 'github') return <Github className={className} />
+  if (id === 'github') return <Code2 className={className} />
   if (id === 'vscode') return <Code2 className={className} />
   if (id === 'brave') return <Globe className={className} />
   if (id === 'solvely') return <Zap className={className} />
@@ -114,6 +102,7 @@ export function PageSettings() {
   const toggleApp = useCampfireStore((state) => state.toggleApp)
   const showToast = useCampfireStore((state) => state.showToast)
   const setActivePage = useCampfireStore((state) => state.setActivePage)
+  const logOut = useCampfireStore((state) => state.logOut)
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('General')
   const [isShimmering, setIsShimmering] = useState(false)
@@ -140,11 +129,15 @@ export function PageSettings() {
     setIsShimmering(true)
   }
 
-  const chooseAvatar = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const chooseAvatar = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) {
       showToast('Choose an image file')
+      return
+    }
+    if (file.size > 1024 * 1024) {
+      showToast('Profile images must be smaller than 1 MB')
       return
     }
     const reader = new FileReader()
@@ -165,7 +158,8 @@ export function PageSettings() {
     }
     setDisplayName(trimmedName)
     setEmail(emailDraft.trim())
-    setHandle(handleDraft.trim() || '@you')
+    const trimmedHandle = handleDraft.trim()
+    setHandle(trimmedHandle ? (trimmedHandle.startsWith('@') ? trimmedHandle : `@${trimmedHandle}`) : '@you')
   }
 
   const handleRefresh = (id: string) => {
@@ -177,7 +171,7 @@ export function PageSettings() {
     }, 500)
   }
 
-  const addConnection = (event: React.FormEvent<HTMLFormElement>) => {
+  const addConnection = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const name = newAccountName.trim()
     const endpoint = newAccountEndpoint.trim()
@@ -422,7 +416,7 @@ export function PageSettings() {
                             <span className="truncate text-[12px] text-[#A0A0A0]">{account.details}</span>
                           </div>
                           <div className="flex shrink-0 items-center gap-4">
-                            <span className="mr-0 font-mono text-[12px] text-[#808080]">{account.status}</span>
+                            <span className="font-mono text-[12px] text-[#808080]">{account.active ? account.status : 'DISABLED'}</span>
                             <Toggle checked={account.active} onChange={() => toggleAccount(account.id)} label={`Enable ${account.name}`} />
                           </div>
                         </div>
@@ -507,7 +501,7 @@ export function PageSettings() {
                   <button type="button" onClick={() => { setActivePage('page-home'); showToast('Session reset') }} className="flex items-center gap-2 border border-white/[0.12] px-3 py-2 text-[12px] text-zinc-200 transition-colors hover:bg-white/[0.05]">
                     <RefreshCw className="h-3.5 w-3.5" /> Reset session
                   </button>
-                  <button type="button" onClick={() => { useCampfireStore.getState().setActivePage('page-home'); showToast('Logged out') }} className="flex items-center gap-2 border border-white/[0.12] px-3 py-2 text-[12px] text-zinc-200 transition-colors hover:bg-white/[0.05]">
+                  <button type="button" onClick={logOut} className="flex items-center gap-2 border border-white/[0.12] px-3 py-2 text-[12px] text-zinc-200 transition-colors hover:bg-white/[0.05]">
                     <LockKeyhole className="h-3.5 w-3.5" /> Log out
                   </button>
                 </div>

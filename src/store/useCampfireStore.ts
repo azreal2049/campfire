@@ -67,6 +67,7 @@ interface CampfireStore {
   addAccount: (account: Omit<ConnectedAccount, 'id' | 'active' | 'expanded'>) => void
   toggleApp: (id: string) => void
   showToast: (message: string) => void
+  logOut: () => void
 }
 
 export const useCampfireStore = create<CampfireStore>()(persist((set) => ({
@@ -166,8 +167,7 @@ export const useCampfireStore = create<CampfireStore>()(persist((set) => ({
   clearToast: () => set({ toastMessage: null }),
   setDisplayName: (name) => {
     set({ displayName: name })
-    set({ toastMessage: 'Settings saved' })
-    setTimeout(() => set({ toastMessage: null }), 2500)
+    useCampfireStore.getState().showToast('Settings saved')
   },
   setEmail: (email) => {
     set({ email })
@@ -238,6 +238,10 @@ export const useCampfireStore = create<CampfireStore>()(persist((set) => ({
         set({ toastMessage: null })
       }
     }, 2500)
+  },
+  logOut: () => {
+    set({ isAuthenticated: false, activePage: 'page-home' })
+    useCampfireStore.getState().showToast('Logged out')
   },
 }), {
   name: 'campfire-settings',
