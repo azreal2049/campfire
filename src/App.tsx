@@ -8,6 +8,7 @@ import { PageVault } from './pages/PageVault'
 import { PageSettings } from './pages/PageSettings'
 import { PageNotes } from './pages/PageNotes'
 import { PageFriends } from './pages/PageFriends'
+import { PageShop } from './pages/PageShop'
 
 export default function App() {
   const activePage = useCampfireStore((state) => state.activePage)
@@ -26,6 +27,8 @@ export default function App() {
         return <PageFriends />
       case 'page-settings':
         return <PageSettings />
+      case 'page-shop':
+        return <PageShop />
       default:
         return <PageHome />
     }

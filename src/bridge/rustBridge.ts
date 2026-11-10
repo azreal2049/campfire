@@ -11,6 +11,42 @@ export type CampfireSessionType =
 export type BurnMode = 'pomodoro' | 'countdown' | 'deadman'
 export type AgentKind = 'study' | 'code-audit' | 'creator'
 export type AgentStatus = 'running' | 'complete' | 'error'
+export type WorkspaceRevisionKind = 'code' | 'note' | 'whiteboard'
+export type ShopItemKind = 'theme' | 'soundscape' | 'agent'
+
+export interface PortalDrop {
+  id: string
+  source: string
+  kind: WorkspaceRevisionKind | 'reference'
+  content: string
+  createdAt: string
+  inserted: boolean
+}
+
+export interface WorkspaceRevision {
+  id: string
+  kind: WorkspaceRevisionKind
+  fileName: string
+  content: string
+  createdAt: number
+}
+
+export interface SparkContract {
+  goal: string
+  status: 'active' | 'verified'
+  startedAt: number
+  stake: number
+  reward: number
+}
+
+export interface ShopItem {
+  id: string
+  name: string
+  description: string
+  kind: ShopItemKind
+  price: number
+  owned: boolean
+}
 
 export interface VaultItem {
   id: string

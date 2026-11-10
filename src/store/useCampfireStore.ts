@@ -7,7 +7,12 @@ import {
   type AgentTask,
   type BurnTimerState,
   type CampfireSessionType,
+  type PortalDrop,
+  type ShopItem,
+  type SparkContract,
   type VaultItem,
+  type WorkspaceRevision,
+  type WorkspaceRevisionKind,
   type WorkspaceSnapshot,
 } from '../bridge/rustBridge'
 
@@ -82,6 +87,15 @@ interface CampfireStore {
   soundscapeVolume: number
   soundscapePlaying: boolean
   stokePulse: boolean
+  portalDrops: PortalDrop[]
+  sparkBalance: number
+  sparkContract: SparkContract | null
+  shopItems: ShopItem[]
+  activeGlassTheme: string
+  activeSoundscapePack: string
+  activeAgentPreset: string
+  workspaceRevisions: WorkspaceRevision[]
+  momentum: 'idle' | 'typing' | 'success'
   setActivePage: (page: string) => void
   setActiveWorkspaceView: (view: 'chat' | 'workplace') => void
   setAssistantOpen: (open: boolean) => void
@@ -130,6 +144,13 @@ interface CampfireStore {
   setSoundscapePlaying: (playing: boolean) => void
   setSoundscapeVolume: (volume: number) => void
   syncSquadView: (member: string) => void
+  addPortalDrop: (kind: WorkspaceRevisionKind | 'reference', content: string, source: string) => void
+  insertPortalDrop: (id: string, target: 'ide' | 'whiteboard') => void
+  startSparkContract: (goal: string) => boolean
+  verifySparkContract: () => void
+  purchaseShopItem: (id: string) => void
+  equipShopItem: (id: string) => void
+  recordWorkspaceRevision: (kind: WorkspaceRevisionKind, content: string, fileName?: string) => void
 }
 
 export const useCampfireStore = create<CampfireStore>()(persist((set) => ({
@@ -244,6 +265,22 @@ export function solve(input: number[]) {
   soundscapeVolume: 0.18,
   soundscapePlaying: false,
   stokePulse: false,
+  portalDrops: [],
+  sparkBalance: 150,
+  sparkContract: null,
+  shopItems: [
+    { id: 'glass-ember', name: 'Ember Glass', description: 'Warm, translucent card surfaces with a restrained amber edge.', kind: 'theme', price: 50, owned: false },
+    { id: 'glass-frost', name: 'Frosted Cyan', description: 'Cool glass surfaces tuned for quiet reading sessions.', kind: 'theme', price: 50, owned: false },
+    { id: 'sound-rain-plus', name: 'Rainfall Pack', description: 'A focused set of rain and low-noise soundscapes.', kind: 'soundscape', price: 35, owned: false },
+    { id: 'sound-fire-plus', name: 'Hearth Pack', description: 'Additional warm crackle and ember soundscape presets.', kind: 'soundscape', price: 35, owned: false },
+    { id: 'agent-study-pro', name: 'Study Coach Preset', description: 'A study-first agent tone for summaries and recall prompts.', kind: 'agent', price: 40, owned: false },
+    { id: 'agent-code-review', name: 'Code Clarity Preset', description: 'A concise agent tone for code review and test ideas.', kind: 'agent', price: 40, owned: false },
+  ],
+  activeGlassTheme: 'default',
+  activeSoundscapePack: 'default',
+  activeAgentPreset: 'default',
+  workspaceRevisions: [],
+  momentum: 'idle',
 
   setActivePage: (page) => set({
     activePage: page,
@@ -405,7 +442,13 @@ export function solve(input: number[]) {
           elapsedSeconds: state.burnTimer.elapsedSeconds + 1,
           warning: false,
         },
-        toastMessage: onBreak ? 'Focus block started' : 'Focus block complete — take a break',
+        ...(onBreak && state.sparkContract?.status === 'active'
+          ? {
+              sparkBalance: state.sparkBalance + state.sparkContract.reward,
+              sparkContract: { ...state.sparkContract, status: 'verified' as const },
+              toastMessage: `Focus complete — +${state.sparkContract.reward} Ember Sparks`,
+            }
+          : { toastMessage: onBreak ? 'Focus block started' : 'Focus block complete — take a break' }),
       }
     }
     return {
@@ -435,6 +478,7 @@ export function solve(input: number[]) {
   },
   updateIdeCode: (ideCode) => set((state) => ({
     ideCode,
+    momentum: 'typing',
     editedCodeFiles: state.editedCodeFiles.includes(state.ideFileName)
       ? state.editedCodeFiles
       : [...state.editedCodeFiles, state.ideFileName],
@@ -456,15 +500,25 @@ export function solve(input: number[]) {
     pendingWorkplaceTool: 'study',
     activeSessionType: 'study-group',
   }),
-  setWhiteboardText: (whiteboardText) => set({ whiteboardText }),
+  setWhiteboardText: (whiteboardText) => set({ whiteboardText, momentum: 'typing' }),
   solveDoubt: (content) => {
     set((state) => ({
       solvedDoubts: [...state.solvedDoubts, content],
       whiteboardText: `${state.whiteboardText}\n\nSolved doubt: ${content}`.trim(),
+      momentum: 'success',
+      ...(state.sparkContract?.status === 'active'
+        ? {
+            sparkBalance: state.sparkBalance + state.sparkContract.reward,
+            sparkContract: { ...state.sparkContract, status: 'verified' as const },
+          }
+        : {}),
     }))
+    window.setTimeout(() => {
+      if (useCampfireStore.getState().momentum === 'success') set({ momentum: 'idle' })
+    }, 1400)
     useCampfireStore.getState().stokeFuel()
   },
-  setNoteContent: (noteContent) => set({ noteContent }),
+  setNoteContent: (noteContent) => set({ noteContent, momentum: 'typing' }),
   setBlueprintMode: (blueprintMode) => set({ blueprintMode }),
   setPendingWorkplaceTool: (pendingWorkplaceTool) => set({ pendingWorkplaceTool }),
   saveWorkspaceSnapshot: (name) => {
@@ -582,6 +636,110 @@ ${state.whiteboardText || 'No whiteboard notes recorded.'}`
       pendingWorkplaceTool: member === 'Nova' ? 'ide' : member === 'Kai' ? 'study' : null,
     })
   },
+  addPortalDrop: (kind, content, source) => {
+    const trimmed = content.trim()
+    if (!trimmed) return
+    const drop: PortalDrop = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      kind,
+      content: trimmed.slice(0, 12000),
+      source,
+      createdAt: new Date().toLocaleTimeString(),
+      inserted: false,
+    }
+    set((state) => ({ portalDrops: [drop, ...state.portalDrops].slice(0, 30) }))
+    useCampfireStore.getState().showToast('🌀 Added to your Campfire Portal')
+  },
+  insertPortalDrop: (id, target) => {
+    const drop = useCampfireStore.getState().portalDrops.find((item) => item.id === id)
+    if (!drop) return
+    set((state) => ({
+      portalDrops: state.portalDrops.map((item) => item.id === id ? { ...item, inserted: true } : item),
+      ...(target === 'ide'
+        ? {
+            ideCode: `// Portal drop · ${drop.source}\n${drop.content}`,
+            ideFileName: 'portal-reference.txt',
+            editedCodeFiles: state.editedCodeFiles.includes('portal-reference.txt')
+              ? state.editedCodeFiles
+              : [...state.editedCodeFiles, 'portal-reference.txt'],
+            pendingWorkplaceTool: 'ide' as const,
+          }
+        : {
+            whiteboardText: `${state.whiteboardText}\n\n${drop.content}\n\nSource: ${drop.source}`.trim(),
+            pendingWorkplaceTool: 'study' as const,
+          }),
+      activePage: 'page-workplace',
+      workspaceView: 'workplace',
+      toastMessage: `⚡ Inserted portal drop into ${target === 'ide' ? 'IDE' : 'Whiteboard'}`,
+    }))
+  },
+  startSparkContract: (goal) => {
+    const state = useCampfireStore.getState()
+    const cleanGoal = goal.trim().slice(0, 120)
+    if (!cleanGoal) {
+      state.showToast('Add a one-line session goal first')
+      return false
+    }
+    if (state.sparkBalance < 25) {
+      state.showToast('You need 25 Sparks to stake a contract')
+      return false
+    }
+    set((current) => ({
+      sparkBalance: current.sparkBalance - 25,
+      sparkContract: { goal: cleanGoal, status: 'active', startedAt: Date.now(), stake: 25, reward: 50 },
+      burnTimer: { ...current.burnTimer, running: true, lastActivityAt: Date.now(), phase: 'focus' },
+      toastMessage: 'Spark Contract started · 25 Sparks staked',
+    }))
+    return true
+  },
+  verifySparkContract: () => {
+    set((state) => {
+      if (!state.sparkContract || state.sparkContract.status !== 'active') return state
+      return {
+        sparkBalance: state.sparkBalance + state.sparkContract.reward,
+        sparkContract: { ...state.sparkContract, status: 'verified' },
+        momentum: 'success',
+        toastMessage: `Spark Contract verified · +${state.sparkContract.reward} Ember Sparks`,
+      }
+    })
+    window.setTimeout(() => {
+      if (useCampfireStore.getState().momentum === 'success') set({ momentum: 'idle' })
+    }, 1400)
+  },
+  purchaseShopItem: (id) => {
+    set((state) => {
+      const item = state.shopItems.find((candidate) => candidate.id === id)
+      if (!item || item.owned) return state
+      if (state.sparkBalance < item.price) {
+        return { ...state, toastMessage: 'Not enough Ember Sparks for this item' }
+      }
+      return {
+        sparkBalance: state.sparkBalance - item.price,
+        shopItems: state.shopItems.map((candidate) => candidate.id === id ? { ...candidate, owned: true } : candidate),
+        toastMessage: `${item.name} unlocked`,
+      }
+    })
+  },
+  equipShopItem: (id) => {
+    set((state) => {
+      const item = state.shopItems.find((candidate) => candidate.id === id)
+      if (!item?.owned) return state
+      if (item.kind === 'theme') return { activeGlassTheme: item.id, toastMessage: `${item.name} applied` }
+      if (item.kind === 'soundscape') return { activeSoundscapePack: item.id, toastMessage: `${item.name} applied` }
+      return { activeAgentPreset: item.id, toastMessage: `${item.name} applied` }
+    })
+  },
+  recordWorkspaceRevision: (kind, content, fileName = '') => {
+    if (!content.trim()) return
+    const revision: WorkspaceRevision = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      kind,
+      fileName,
+      content: content.slice(0, 30000),
+      createdAt: Date.now(),
+    }
+    set((state) => ({ workspaceRevisions: [...state.workspaceRevisions, revision].slice(-100) }))
+  },
 }), {
   name: 'campfire-settings',
   storage: createJSONStorage(() => localStorage),
@@ -608,5 +766,13 @@ ${state.whiteboardText || 'No whiteboard notes recorded.'}`
     soundscapePreset: state.soundscapePreset,
     soundscapeVolume: state.soundscapeVolume,
     vaultItems: state.vaultItems,
+    portalDrops: state.portalDrops,
+    sparkBalance: state.sparkBalance,
+    sparkContract: state.sparkContract,
+    shopItems: state.shopItems,
+    activeGlassTheme: state.activeGlassTheme,
+    activeSoundscapePack: state.activeSoundscapePack,
+    activeAgentPreset: state.activeAgentPreset,
+    workspaceRevisions: state.workspaceRevisions,
   }),
 }))

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useCampfireStore } from '../store/useCampfireStore'
-import { Flame, MessageSquare, LayoutGrid, X, Sparkles, Search } from 'lucide-react'
+import { Flame, MessageSquare, LayoutGrid, X, Sparkles, Search, Store } from 'lucide-react'
 import { FloatingCapsuleNav } from './FloatingCapsuleNav'
 import { CommandPalette } from './CommandPalette'
+import { WhisperAction } from './WhisperAction'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -20,6 +21,7 @@ export function AppShell({ children }: AppShellProps) {
   const tickBurnTimer = useCampfireStore((state) => state.tickBurnTimer)
   const registerActivity = useCampfireStore((state) => state.registerActivity)
   const openLitAFire = useCampfireStore((state) => state.openLitAFire)
+  const sparkBalance = useCampfireStore((state) => state.sparkBalance)
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
 
   useEffect(() => {
@@ -28,10 +30,14 @@ export function AppShell({ children }: AppShellProps) {
         event.preventDefault()
         setCommandPaletteOpen((open) => !open)
       }
+      if (event.altKey && event.code === 'Space') {
+        event.preventDefault()
+        setAssistantOpen(true)
+      }
     }
     window.addEventListener('keydown', handleShortcut)
     return () => window.removeEventListener('keydown', handleShortcut)
-  }, [])
+  }, [setAssistantOpen])
 
   useEffect(() => {
     const timerId = window.setInterval(tickBurnTimer, 1000)
@@ -101,6 +107,14 @@ export function AppShell({ children }: AppShellProps) {
               Workplace
             </button>
           </div>
+          <button
+            type="button"
+            onClick={() => setActivePage('page-shop')}
+            className="mt-4 flex w-full items-center justify-between border border-white/[0.08] px-3 py-2 text-[12px] text-zinc-400 transition-colors hover:border-white/20 hover:text-white"
+          >
+            <span className="flex items-center gap-2"><Store className="h-3.5 w-3.5" /> Shop</span>
+            <span className="text-[10px] text-amber-300">{sparkBalance} ✦</span>
+          </button>
         </aside>
 
         {/* Main Content */}
@@ -149,6 +163,7 @@ export function AppShell({ children }: AppShellProps) {
                 <button type="button" onClick={() => void dispatchAgent('creator')} className="border border-white/[0.1] px-3 py-2 text-left text-[12px] text-zinc-300 hover:bg-white/[0.05]">🎬 Creator Hook &amp; Storyboard Agent</button>
               </div>
             </div>
+            <WhisperAction />
             {agentTasks.length > 0 && (
               <div className="mt-6 min-h-0 flex-1 overflow-y-auto border-t border-white/[0.08] pt-4">
                 <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-zinc-500">Recent runs</p>
