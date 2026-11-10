@@ -1,21 +1,30 @@
-import { AppShell } from './components/AppShell'
 import { useCampfireStore } from './store/useCampfireStore'
+import { DevPageSwitcher } from './components/DevPageSwitcher'
+import { PageHome } from './pages/PageHome'
+import { PageChat } from './pages/PageChat'
+import { PageWorkplace } from './pages/PageWorkplace'
+import { PageVault } from './pages/PageVault'
 
 export default function App() {
-  const workspaceView = useCampfireStore((state) => state.workspaceView)
+  const activePage = useCampfireStore((state) => state.activePage)
+
+  function renderPage() {
+    switch (activePage) {
+      case 'page-chat':
+        return <PageChat />
+      case 'page-workplace':
+        return <PageWorkplace />
+      case 'page-vault':
+        return <PageVault />
+      default:
+        return <PageHome />
+    }
+  }
 
   return (
-    <AppShell>
-      <div className="flex min-h-screen items-center justify-center bg-[#050505]">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-white">
-            {workspaceView === 'chat' ? 'Chat' : 'Workplace'}
-          </h1>
-          <p className="mt-2 text-zinc-500">
-            Toggle the button above to switch views
-          </p>
-        </div>
-      </div>
-    </AppShell>
+    <div className="min-h-screen bg-[#070709] text-white">
+      {renderPage()}
+      <DevPageSwitcher />
+    </div>
   )
 }

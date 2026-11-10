@@ -1,8 +1,9 @@
 export function PageWorkplace() {
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
-      <div className="p-8">
-        <h1 className="text-2xl font-semibold">Workplace</h1>
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-white">Workplace</h1>
+        <p className="mt-2 text-zinc-500">Ready to design this page with you</p>
       </div>
     </div>
   )
