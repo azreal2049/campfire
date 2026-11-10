@@ -1,5 +1,6 @@
 import { useCampfireStore } from '../store/useCampfireStore'
-import { Flame, MessageSquare, LayoutGrid, Settings } from 'lucide-react'
+import { Flame, MessageSquare, LayoutGrid, X, Sparkles } from 'lucide-react'
+import { FloatingCapsuleNav } from './FloatingCapsuleNav'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -9,6 +10,8 @@ export function AppShell({ children }: AppShellProps) {
   const workspaceView = useCampfireStore((state) => state.workspaceView)
   const setActiveWorkspaceView = useCampfireStore((state) => state.setActiveWorkspaceView)
   const setActivePage = useCampfireStore((state) => state.setActivePage)
+  const isAssistantOpen = useCampfireStore((state) => state.isAssistantOpen)
+  const setAssistantOpen = useCampfireStore((state) => state.setAssistantOpen)
   const openLitAFire = useCampfireStore((state) => state.openLitAFire)
 
   return (
@@ -16,15 +19,9 @@ export function AppShell({ children }: AppShellProps) {
       {/* ── Top Bar ── */}
       <header className="flex h-12 items-center justify-between border-b border-white/[0.08] bg-[#0a0a0d]/80 px-4 backdrop-blur-md">
         <span className="text-sm font-semibold tracking-tight">🔥 Campfire</span>
-        <button
-          type="button"
-          onClick={() => setActivePage('page-settings')}
-          aria-label="Open settings"
-          className="flex h-8 w-8 items-center justify-center text-zinc-500 transition-colors hover:text-white"
-        >
-          <Settings className="h-4 w-4" />
-        </button>
+        <span className="w-8" aria-hidden="true" />
       </header>
+      <FloatingCapsuleNav />
 
       {/* ── Body: Left Sidebar + Main Content ── */}
       <div className="flex flex-1 overflow-hidden">
@@ -71,6 +68,42 @@ export function AppShell({ children }: AppShellProps) {
           {children}
         </main>
       </div>
+      {isAssistantOpen && (
+        <div className="fixed inset-0 z-[70] bg-black/35" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setAssistantOpen(false)
+        }}>
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="assistant-title"
+            className="absolute bottom-0 right-0 top-0 flex w-full max-w-[400px] flex-col border-l border-white/[0.09] bg-[#0C0C0C] p-6 text-white shadow-2xl"
+          >
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-5">
+              <div className="flex items-center gap-2.5">
+                <Sparkles className="h-4 w-4 text-zinc-300" />
+                <h2 id="assistant-title" className="text-sm font-medium">Campfire AI Assistant</h2>
+              </div>
+              <button type="button" onClick={() => setAssistantOpen(false)} aria-label="Close AI assistant" className="text-zinc-500 transition-colors hover:text-white">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-6 border border-white/[0.08] bg-white/[0.02] p-4">
+              <p className="text-[13px] leading-relaxed text-zinc-300">Connect an AI engine to start a conversation with your Campfire assistant.</p>
+              <p className="mt-2 text-[12px] leading-relaxed text-zinc-500">Your local services and model endpoints can be managed in Connections &amp; AI.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setAssistantOpen(false)
+                  setActivePage('page-settings')
+                }}
+                className="mt-4 border border-white/[0.12] px-3 py-2 text-[12px] text-white transition-colors hover:bg-white/[0.05]"
+              >
+                Open connection settings
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
     </div>
   )
 }

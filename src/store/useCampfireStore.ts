@@ -40,6 +40,7 @@ interface CampfireStore {
   activePage: string
   isAuthenticated: boolean
   workspaceView: 'chat' | 'workplace'
+  isAssistantOpen: boolean
   vaultItems: VaultItem[]
   toastMessage: string | null
   // Settings
@@ -52,6 +53,7 @@ interface CampfireStore {
   apps: AppIntegration[]
   setActivePage: (page: string) => void
   setActiveWorkspaceView: (view: 'chat' | 'workplace') => void
+  setAssistantOpen: (open: boolean) => void
   openLitAFire: () => void
   saveToVault: (item: Omit<VaultItem, 'id' | 'date'>) => void
   clearToast: () => void
@@ -74,6 +76,7 @@ export const useCampfireStore = create<CampfireStore>()(persist((set) => ({
   activePage: 'page-home',
   isAuthenticated: true,
   workspaceView: 'chat',
+  isAssistantOpen: false,
   vaultItems: [
     {
       id: 'v1',
@@ -145,8 +148,13 @@ export const useCampfireStore = create<CampfireStore>()(persist((set) => ({
     { id: 'obsidian', name: 'Obsidian / Notion Vault', description: 'Auto-sync notes, mindmaps, and vault exports to your local Obsidian vault.', installed: false },
   ],
 
-  setActivePage: (page) => set({ activePage: page }),
+  setActivePage: (page) => set({
+    activePage: page,
+    ...(page === 'page-chat' ? { workspaceView: 'chat' as const } : {}),
+    ...(page === 'page-workplace' ? { workspaceView: 'workplace' as const } : {}),
+  }),
   setActiveWorkspaceView: (view) => set({ workspaceView: view, activePage: view === 'chat' ? 'page-chat' : 'page-workplace' }),
+  setAssistantOpen: (open) => set({ isAssistantOpen: open }),
   openLitAFire: () => {
     console.log('Lit a fire modal opened')
   },
