@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Hash, Bell, Pin, Users, Search, Plus, Gift, Image, Smile } from 'lucide-react'
+import { Hash, Bell, Pin, Users, Search, Plus, Gift, Image, Smile, Code2, Brain, Bookmark } from 'lucide-react'
+import { useCampfireStore } from '../store/useCampfireStore'
 
 interface Message {
   id: string
@@ -36,10 +37,18 @@ const MESSAGES: Message[] = [
 export function PageChat() {
   const [messages, setMessages] = useState<Message[]>(MESSAGES)
   const [inputVal, setInputVal] = useState('')
+  const pipeToIde = useCampfireStore((state) => state.pipeToIde)
+  const pipeToStudy = useCampfireStore((state) => state.pipeToStudy)
+  const saveToVault = useCampfireStore((state) => state.saveToVault)
+  const registerActivity = useCampfireStore((state) => state.registerActivity)
+
+  const isTechnical = (content: string) =>
+    /```|=>|function |const |let |import |class |algorithm|code|typescript|javascript|python|rust|error|debug|api|variable|compile/i.test(content)
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
     if (!inputVal.trim()) return
+    registerActivity()
     setMessages([
       ...messages,
       {
@@ -91,7 +100,7 @@ export function PageChat() {
         </div>
 
         {messages.map((msg) => (
-          <div key={msg.id} className="flex gap-4 group hover:bg-[#2e3035] -mx-4 px-4 py-1 rounded transition">
+          <div key={msg.id} className="group -mx-4 flex gap-4 rounded px-4 py-1 transition hover:bg-[#2e3035]">
             <div className="h-10 w-10 rounded-full bg-[#5865f2] flex items-center justify-center font-bold text-white shrink-0 mt-0.5">
               {msg.avatar}
             </div>
@@ -103,6 +112,36 @@ export function PageChat() {
                 <span className="text-[11px] text-[#949ba4]">{msg.timestamp}</span>
               </div>
               <p className="text-sm text-[#dbdee1]">{msg.content}</p>
+              {isTechnical(msg.content) && (
+                <div className="mt-2 flex flex-wrap gap-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                  <button
+                    type="button"
+                    onClick={() => saveToVault({
+                      title: `Chat snippet — ${msg.author}`,
+                      category: 'Code Projects',
+                      snippet: msg.content,
+                      format: 'txt',
+                    })}
+                    className="flex items-center gap-1 rounded border border-white/[0.12] bg-black/20 px-2 py-1 text-[10px] text-zinc-400 hover:text-white"
+                  >
+                    <Bookmark className="h-3 w-3" /> Save to Vault
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => pipeToIde(msg.content, `chat-${msg.id}.ts`)}
+                    className="flex items-center gap-1 rounded border border-white/[0.12] bg-black/20 px-2 py-1 text-[10px] text-zinc-400 hover:text-white"
+                  >
+                    <Code2 className="h-3 w-3" /> Pipe to IDE
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => pipeToStudy(msg.content)}
+                    className="flex items-center gap-1 rounded border border-white/[0.12] bg-black/20 px-2 py-1 text-[10px] text-zinc-400 hover:text-white"
+                  >
+                    <Brain className="h-3 w-3" /> Pipe to Solvely / Whiteboard
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -117,7 +156,10 @@ export function PageChat() {
           <input
             type="text"
             value={inputVal}
-            onChange={(e) => setInputVal(e.target.value)}
+            onChange={(e) => {
+              setInputVal(e.target.value)
+              registerActivity()
+            }}
             placeholder="Message #general-chat"
             className="w-full bg-transparent pl-10 pr-12 text-sm text-[#dbdee1] placeholder-[#80848e] focus:outline-none"
           />

@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import { useCampfireStore } from '../store/useCampfireStore'
-import { Flame, MessageSquare, LayoutGrid, X, Sparkles } from 'lucide-react'
+import { Flame, MessageSquare, LayoutGrid, X, Sparkles, Search } from 'lucide-react'
 import { FloatingCapsuleNav } from './FloatingCapsuleNav'
+import { CommandPalette } from './CommandPalette'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -12,14 +14,37 @@ export function AppShell({ children }: AppShellProps) {
   const setActivePage = useCampfireStore((state) => state.setActivePage)
   const isAssistantOpen = useCampfireStore((state) => state.isAssistantOpen)
   const setAssistantOpen = useCampfireStore((state) => state.setAssistantOpen)
+  const agentTasks = useCampfireStore((state) => state.agentTasks)
+  const dispatchAgent = useCampfireStore((state) => state.dispatchAgent)
   const openLitAFire = useCampfireStore((state) => state.openLitAFire)
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
+
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setCommandPaletteOpen((open) => !open)
+      }
+    }
+    window.addEventListener('keydown', handleShortcut)
+    return () => window.removeEventListener('keydown', handleShortcut)
+  }, [])
 
   return (
     <div className="flex min-h-screen flex-col bg-[#070709] text-white">
       {/* ── Top Bar ── */}
       <header className="flex h-12 items-center justify-between border-b border-white/[0.08] bg-[#0a0a0d]/80 px-4 backdrop-blur-md">
         <span className="text-sm font-semibold tracking-tight">🔥 Campfire</span>
-        <span className="w-8" aria-hidden="true" />
+        <button
+          type="button"
+          onClick={() => setCommandPaletteOpen(true)}
+          aria-label="Open command palette"
+          className="flex h-8 items-center gap-2 border border-white/[0.09] bg-white/[0.03] px-2.5 text-zinc-500 transition-colors hover:border-white/20 hover:text-white"
+        >
+          <Search className="h-3.5 w-3.5" />
+          <span className="hidden text-[11px] sm:inline">Commands</span>
+          <kbd className="hidden border border-white/[0.08] px-1 text-[10px] sm:inline">Ctrl K</kbd>
+        </button>
       </header>
       <FloatingCapsuleNav />
 
@@ -101,9 +126,34 @@ export function AppShell({ children }: AppShellProps) {
                 Open connection settings
               </button>
             </div>
+            <div className="mt-6">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-zinc-500">Dispatch an agent</p>
+              <div className="grid gap-2">
+                <button type="button" onClick={() => void dispatchAgent('study')} className="border border-white/[0.1] px-3 py-2 text-left text-[12px] text-zinc-300 hover:bg-white/[0.05]">🧬 Study &amp; Flashcard Agent</button>
+                <button type="button" onClick={() => void dispatchAgent('code-audit')} className="border border-white/[0.1] px-3 py-2 text-left text-[12px] text-zinc-300 hover:bg-white/[0.05]">💻 Code Audit &amp; Test Agent</button>
+                <button type="button" onClick={() => void dispatchAgent('creator')} className="border border-white/[0.1] px-3 py-2 text-left text-[12px] text-zinc-300 hover:bg-white/[0.05]">🎬 Creator Hook &amp; Storyboard Agent</button>
+              </div>
+            </div>
+            {agentTasks.length > 0 && (
+              <div className="mt-6 min-h-0 flex-1 overflow-y-auto border-t border-white/[0.08] pt-4">
+                <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-zinc-500">Recent runs</p>
+                <div className="space-y-3">
+                  {agentTasks.map((task) => (
+                    <article key={task.id} className="border border-white/[0.08] bg-white/[0.02] p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[12px] font-medium text-zinc-200">{task.title}</p>
+                        <span className="text-[10px] text-zinc-600">{task.status}</span>
+                      </div>
+                      {task.output && <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap text-[11px] leading-relaxed text-zinc-400">{task.output}</pre>}
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
           </aside>
         </div>
       )}
+      <CommandPalette open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
     </div>
   )
 }

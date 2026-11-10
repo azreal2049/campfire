@@ -86,6 +86,7 @@ interface CampfireStore {
   setAssistantOpen: (open: boolean) => void
   openLitAFire: () => void
   saveToVault: (item: VaultDraft) => void
+  restoreVaultItem: (id: string) => void
   clearToast: () => void
   setDisplayName: (name: string) => void
   setEmail: (email: string) => void
@@ -261,6 +262,23 @@ export function solve(input: number[]) {
     setTimeout(() => {
       set({ toastMessage: null })
     }, 3000)
+  },
+  restoreVaultItem: (id) => {
+    const item = useCampfireStore.getState().vaultItems.find((saved) => saved.id === id)
+    if (!item) return
+    const isCode = /code|project/i.test(item.category) || /\.(ts|tsx|js|py|rs|go|c|cpp)$/i.test(item.fileName)
+    const isDoubt = /doubt/i.test(item.category)
+    set((state) => ({
+      activePage: 'page-workplace',
+      workspaceView: 'workplace',
+      ideCode: isCode ? item.content : state.ideCode,
+      ideFileName: isCode ? item.fileName : state.ideFileName,
+      noteContent: isCode ? state.noteContent : item.content,
+      whiteboardText: isDoubt ? item.content : state.whiteboardText,
+      pendingWorkplaceTool: isCode ? 'ide' : 'study',
+      activeSessionType: isCode ? 'coders-developers' : 'study-group',
+      toastMessage: `Restored ${item.title} in Workplace`,
+    }))
   },
   clearToast: () => set({ toastMessage: null }),
   setDisplayName: (name) => {

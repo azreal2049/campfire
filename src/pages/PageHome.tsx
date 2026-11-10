@@ -4,6 +4,7 @@ export function PageHome() {
   const displayName = useCampfireStore((state) => state.displayName)
   const setActiveWorkspaceView = useCampfireStore((state) => state.setActiveWorkspaceView)
   const setAssistantOpen = useCampfireStore((state) => state.setAssistantOpen)
+  const continueLastSession = useCampfireStore((state) => state.continueLastSession)
 
   return (
     <div className="flex min-h-[calc(100vh-48px)] items-center justify-center px-6 py-12">
@@ -34,7 +35,7 @@ export function PageHome() {
             </button>
 
             <button
-              onClick={() => setActiveWorkspaceView('workplace')}
+              onClick={continueLastSession}
               className="group flex w-full max-w-md items-center justify-between rounded-xl border border-white/10 bg-black/40 px-5 py-3 text-sm text-zinc-300 transition hover:border-white/20 hover:bg-white/[0.04] hover:text-white"
             >
               <div className="flex items-center gap-3">
