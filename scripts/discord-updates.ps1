@@ -218,7 +218,7 @@ function Send-CommitUpdate {
     return
   }
 
-  $rows = @()
+  $fields = @()
   for ($index = 0; $index -lt $largeCommits.Count; $index++) {
     $commit = $largeCommits[$index]
     $subject = $commit.Subject
@@ -226,22 +226,25 @@ function Send-CommitUpdate {
       $subject = $subject.Substring(0, 217) + '...'
     }
 
-    $rows += ('**{0:D2} · `{1}` · {2}** — {3}' -f `
+    $fields += @{
+      name = ('{0:D2} | `{1}` | {2}' -f `
       ($index + 1), `
       $commit.Sha.Substring(0, 7), `
-      $commit.Date, `
-      $subject)
-    $rows += ('`{0} files · {1} lines changed`' -f $commit.Files, $commit.ChangedLines)
-    $rows += ''
+      $commit.Date)
+      value = "**$subject**`n`n📄 $($commit.Files) files changed · ✏️ $($commit.ChangedLines) lines"
+      inline = $false
+    }
   }
 
-  $description = "**Latest noteworthy changes**`n`n" + ($rows -join "`n")
+  $fileTotal = ($largeCommits | Measure-Object -Property Files -Sum).Sum
+  $lineTotal = ($largeCommits | Measure-Object -Property ChangedLines -Sum).Sum
   $embed = @{
-    title = '🔥 Campfire · Project Update'
-    description = $description.Trim()
+    title = '🔥 Campfire | Project Update'
+    description = 'A quick, readable look at the latest noteworthy committed changes.'
+    fields = $fields
     color = 0xE87532
     footer = @{
-      text = "$($largeCommits.Count) major commit(s) · $((Get-Date).ToString('MMM d, yyyy'))"
+      text = "$($largeCommits.Count) major commits · $fileTotal files · $lineTotal lines · $((Get-Date).ToString('MMM d, yyyy'))"
     }
   }
   $payload = @{
