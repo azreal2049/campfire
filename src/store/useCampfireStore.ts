@@ -1,12 +1,25 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
+import {
+  generateLocalAgentOutput,
+  runLocalAgent,
+  type AgentKind,
+  type AgentTask,
+  type BurnTimerState,
+  type CampfireSessionType,
+  type VaultItem,
+  type WorkspaceSnapshot,
+} from '../bridge/rustBridge'
 
-export interface VaultItem {
-  id: string
+export type { VaultItem } from '../bridge/rustBridge'
+
+export interface VaultDraft {
   title: string
   category: string
   snippet?: string
-  date: string
+  content?: string
+  fileName?: string
+  format?: string
 }
 
 interface ConnectedAccount {
@@ -51,11 +64,28 @@ interface CampfireStore {
   preferences: SettingsPreferences
   accounts: ConnectedAccount[]
   apps: AppIntegration[]
+  activeSessionType: CampfireSessionType
+  burnTimer: BurnTimerState
+  ideCode: string
+  ideFileName: string
+  editedCodeFiles: string[]
+  noteContent: string
+  whiteboardText: string
+  solvedDoubts: string[]
+  pendingWorkplaceTool: 'ide' | 'study' | null
+  blueprintMode: boolean
+  openWorkplaceCards: string[]
+  workspaceSnapshots: WorkspaceSnapshot[]
+  agentTasks: AgentTask[]
+  squadActivity: string
+  soundscapePreset: 'campfire' | 'brown' | 'rain' | 'gamma'
+  soundscapeVolume: number
+  stokePulse: boolean
   setActivePage: (page: string) => void
   setActiveWorkspaceView: (view: 'chat' | 'workplace') => void
   setAssistantOpen: (open: boolean) => void
   openLitAFire: () => void
-  saveToVault: (item: Omit<VaultItem, 'id' | 'date'>) => void
+  saveToVault: (item: VaultDraft) => void
   clearToast: () => void
   setDisplayName: (name: string) => void
   setEmail: (email: string) => void
@@ -70,6 +100,29 @@ interface CampfireStore {
   toggleApp: (id: string) => void
   showToast: (message: string) => void
   logOut: () => void
+  setSessionType: (sessionType: CampfireSessionType) => void
+  setBurnMode: (mode: BurnTimerState['mode']) => void
+  setBurnTimerRunning: (running: boolean) => void
+  tickBurnTimer: () => void
+  registerActivity: () => void
+  stokeFuel: () => void
+  updateIdeCode: (code: string) => void
+  pipeToIde: (content: string, fileName?: string) => void
+  pipeToStudy: (content: string) => void
+  solveDoubt: (content: string) => void
+  setNoteContent: (content: string) => void
+  setBlueprintMode: (active: boolean) => void
+  setPendingWorkplaceTool: (tool: 'ide' | 'study' | null) => void
+  saveWorkspaceSnapshot: (name: string) => void
+  restoreWorkspaceSnapshot: (id: string) => void
+  continueLastSession: () => void
+  dispatchAgent: (kind: AgentKind) => Promise<void>
+  markAgentRead: (id: string) => void
+  saveAgentOutput: (id: string) => void
+  endAndArchiveSession: () => void
+  setSoundscape: (preset: CampfireStore['soundscapePreset']) => void
+  setSoundscapeVolume: (volume: number) => void
+  syncSquadView: (member: string) => void
 }
 
 export const useCampfireStore = create<CampfireStore>()(persist((set) => ({
@@ -147,6 +200,36 @@ export const useCampfireStore = create<CampfireStore>()(persist((set) => ({
     { id: 'discord', name: 'Discord Rich Presence', description: 'Show your active study/coding campfire on your Discord status.', installed: false },
     { id: 'obsidian', name: 'Obsidian / Notion Vault', description: 'Auto-sync notes, mindmaps, and vault exports to your local Obsidian vault.', installed: false },
   ],
+  activeSessionType: 'study-group',
+  burnTimer: {
+    mode: 'pomodoro',
+    secondsRemaining: 25 * 60,
+    elapsedSeconds: 0,
+    running: false,
+    warning: false,
+    lastActivityAt: Date.now(),
+    focusMinutes: 25,
+    breakMinutes: 5,
+    phase: 'focus',
+  },
+  ideCode: `// Campfire workspace
+export function solve(input: number[]) {
+  return input
+}`,
+  ideFileName: 'main.ts',
+  editedCodeFiles: [],
+  noteContent: 'Leave a little room for the unexpected.',
+  whiteboardText: '',
+  solvedDoubts: [],
+  pendingWorkplaceTool: null,
+  blueprintMode: false,
+  openWorkplaceCards: ['focus-timer', 'inbox-agents', 'quick-note', 'music-deck', 'session-sprint', 'mood-board', 'up-next', 'live-stage', 'activity-chart', 'code-rig', 'study-pod', 'radar-weather'],
+  workspaceSnapshots: [],
+  agentTasks: [],
+  squadActivity: '',
+  soundscapePreset: 'campfire',
+  soundscapeVolume: 0.18,
+  stokePulse: false,
 
   setActivePage: (page) => set({
     activePage: page,
@@ -160,14 +243,21 @@ export const useCampfireStore = create<CampfireStore>()(persist((set) => ({
   },
   saveToVault: (item) => {
     const newItem: VaultItem = {
-      ...item,
       id: String(Date.now()),
+      title: item.title,
+      category: item.category,
+      snippet: item.snippet ?? item.content ?? '',
+      content: item.content ?? item.snippet ?? '',
+      fileName: item.fileName ?? `${item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.${item.format ?? 'md'}`,
+      format: item.format ?? 'md',
       date: 'Just now',
+      ...item,
     }
     set((state) => ({
       vaultItems: [newItem, ...state.vaultItems],
       toastMessage: `📌 Saved "${item.title}" to Personal Vault!`,
     }))
+    useCampfireStore.getState().stokeFuel()
     setTimeout(() => {
       set({ toastMessage: null })
     }, 3000)
@@ -251,6 +341,206 @@ export const useCampfireStore = create<CampfireStore>()(persist((set) => ({
     set({ isAuthenticated: false, activePage: 'page-home' })
     useCampfireStore.getState().showToast('Logged out')
   },
+  setSessionType: (activeSessionType) => set({ activeSessionType }),
+  setBurnMode: (mode) => set((state) => ({
+    burnTimer: {
+      ...state.burnTimer,
+      mode,
+      secondsRemaining: mode === 'pomodoro' ? state.burnTimer.focusMinutes * 60 : Math.max(state.burnTimer.secondsRemaining, 1),
+      phase: 'focus',
+      warning: false,
+    },
+  })),
+  setBurnTimerRunning: (running) => set((state) => ({
+    burnTimer: { ...state.burnTimer, running, lastActivityAt: Date.now() },
+  })),
+  tickBurnTimer: () => set((state) => {
+    if (!state.burnTimer.running) return state
+    const remaining = Math.max(0, state.burnTimer.secondsRemaining - 1)
+    if (remaining === 0 && state.burnTimer.mode === 'pomodoro') {
+      const onBreak = state.burnTimer.phase === 'focus'
+      return {
+        burnTimer: {
+          ...state.burnTimer,
+          phase: onBreak ? 'break' : 'focus',
+          secondsRemaining: (onBreak ? state.burnTimer.breakMinutes : state.burnTimer.focusMinutes) * 60,
+          elapsedSeconds: state.burnTimer.elapsedSeconds + 1,
+          warning: false,
+        },
+        toastMessage: onBreak ? 'Focus block started' : 'Focus block complete — take a break',
+      }
+    }
+    return {
+      burnTimer: {
+        ...state.burnTimer,
+        secondsRemaining: remaining,
+        elapsedSeconds: state.burnTimer.elapsedSeconds + 1,
+        warning: state.burnTimer.mode === 'deadman' && Date.now() - state.burnTimer.lastActivityAt > 60_000,
+        running: remaining > 0 || state.burnTimer.mode === 'deadman',
+      },
+    }
+  }),
+  registerActivity: () => set((state) => ({
+    burnTimer: { ...state.burnTimer, lastActivityAt: Date.now(), warning: false },
+  })),
+  stokeFuel: () => {
+    set((state) => ({
+      burnTimer: {
+        ...state.burnTimer,
+        secondsRemaining: state.burnTimer.secondsRemaining + 300,
+        lastActivityAt: Date.now(),
+        warning: false,
+      },
+      stokePulse: true,
+    }))
+    window.setTimeout(() => set({ stokePulse: false }), 700)
+  },
+  updateIdeCode: (ideCode) => set((state) => ({
+    ideCode,
+    editedCodeFiles: state.editedCodeFiles.includes(state.ideFileName)
+      ? state.editedCodeFiles
+      : [...state.editedCodeFiles, state.ideFileName],
+  })),
+  pipeToIde: (content, fileName = 'chat-snippet.ts') => {
+    set((state) => ({
+      ideCode: content,
+      ideFileName: fileName,
+      editedCodeFiles: state.editedCodeFiles.includes(fileName) ? state.editedCodeFiles : [...state.editedCodeFiles, fileName],
+      activePage: 'page-workplace',
+      workspaceView: 'workplace',
+      pendingWorkplaceTool: 'ide',
+    }))
+  },
+  pipeToStudy: (content) => set((state) => ({
+    whiteboardText: content,
+    activePage: 'page-workplace',
+    workspaceView: 'workplace',
+    pendingWorkplaceTool: 'study',
+    activeSessionType: 'study-group',
+  })),
+  solveDoubt: (content) => {
+    set((state) => ({
+      solvedDoubts: [...state.solvedDoubts, content],
+      whiteboardText: `${state.whiteboardText}\n\nSolved doubt: ${content}`.trim(),
+    }))
+    useCampfireStore.getState().stokeFuel()
+  },
+  setNoteContent: (noteContent) => set({ noteContent }),
+  setBlueprintMode: (blueprintMode) => set({ blueprintMode }),
+  setPendingWorkplaceTool: (pendingWorkplaceTool) => set({ pendingWorkplaceTool }),
+  saveWorkspaceSnapshot: (name) => {
+    const state = useCampfireStore.getState()
+    const snapshot: WorkspaceSnapshot = {
+      id: String(Date.now()),
+      name: name.trim() || `Checkpoint ${state.workspaceSnapshots.length + 1}`,
+      createdAt: new Date().toLocaleString(),
+      sessionType: state.activeSessionType,
+      openCards: state.openWorkplaceCards.join(','),
+      ideCode: state.ideCode,
+      noteText: state.noteContent,
+      whiteboardText: state.whiteboardText,
+      blueprintMode: state.blueprintMode,
+      timerSeconds: state.burnTimer.secondsRemaining,
+      elapsedSeconds: state.burnTimer.elapsedSeconds,
+    }
+    set((current) => ({ workspaceSnapshots: [snapshot, ...current.workspaceSnapshots], toastMessage: 'Workspace snapshot saved' }))
+  },
+  restoreWorkspaceSnapshot: (id) => {
+    const snapshot = useCampfireStore.getState().workspaceSnapshots.find((item) => item.id === id)
+    if (!snapshot) return
+    set((state) => ({
+      activePage: 'page-workplace',
+      workspaceView: 'workplace',
+      activeSessionType: snapshot.sessionType,
+      openWorkplaceCards: snapshot.openCards.split(',').filter(Boolean),
+      ideCode: snapshot.ideCode,
+      noteContent: snapshot.noteText,
+      whiteboardText: snapshot.whiteboardText,
+      blueprintMode: snapshot.blueprintMode,
+      burnTimer: { ...state.burnTimer, secondsRemaining: snapshot.timerSeconds, elapsedSeconds: snapshot.elapsedSeconds },
+      toastMessage: `Restored ${snapshot.name}`,
+    }))
+  },
+  continueLastSession: () => {
+    const state = useCampfireStore.getState()
+    const latest = state.workspaceSnapshots[0]
+    if (latest) state.restoreWorkspaceSnapshot(latest.id)
+    else set({ activePage: 'page-workplace', workspaceView: 'workplace' })
+  },
+  dispatchAgent: async (kind) => {
+    const current = useCampfireStore.getState()
+    const context = [current.noteContent, current.whiteboardText, current.ideCode].filter(Boolean).join('\n\n')
+    const titles: Record<AgentKind, string> = {
+      study: 'Study & Flashcard Agent',
+      'code-audit': 'Code Audit & Test Agent',
+      creator: 'Creator Hook & Storyboard Agent',
+    }
+    const task: AgentTask = {
+      id: String(Date.now()),
+      kind,
+      title: titles[kind],
+      prompt: context.slice(0, 4000),
+      output: '',
+      status: 'running',
+      createdAt: new Date().toLocaleTimeString(),
+      read: false,
+    }
+    set((state) => ({ agentTasks: [task, ...state.agentTasks] }))
+    try {
+      const output = await runLocalAgent({ kind, context })
+      set((state) => ({
+        agentTasks: state.agentTasks.map((item) => item.id === task.id ? { ...item, output, status: 'complete' } : item),
+      }))
+    } catch (error) {
+      const output = generateLocalAgentOutput({ kind, context })
+      set((state) => ({
+        agentTasks: state.agentTasks.map((item) => item.id === task.id ? { ...item, output, status: 'complete' } : item),
+        toastMessage: error instanceof Error ? `Local agent unavailable; used offline generator` : 'Local agent unavailable; used offline generator',
+      }))
+    }
+    useCampfireStore.getState().setActivePage('page-workplace')
+    useCampfireStore.getState().setAssistantOpen(false)
+  },
+  markAgentRead: (id) => set((state) => ({
+    agentTasks: state.agentTasks.map((task) => task.id === id ? { ...task, read: true } : task),
+  })),
+  saveAgentOutput: (id) => {
+    const task = useCampfireStore.getState().agentTasks.find((item) => item.id === id)
+    if (task?.output) useCampfireStore.getState().saveToVault({ title: task.title, category: 'Agent Outputs', snippet: task.output, format: 'md' })
+  },
+  endAndArchiveSession: () => {
+    const state = useCampfireStore.getState()
+    const elapsed = Math.floor(state.burnTimer.elapsedSeconds / 60)
+    const digest = `# Campfire session digest
+
+- Duration: ${elapsed} minutes
+- Active mode: ${state.activeSessionType}
+- Code files edited: ${state.editedCodeFiles.join(', ') || 'None'}
+- Notes written: ${state.noteContent.trim() ? 1 : 0}
+- Doubts solved: ${state.solvedDoubts.length}
+
+## Session note
+${state.noteContent || 'No notes recorded.'}
+
+## Whiteboard
+${state.whiteboardText || 'No whiteboard notes recorded.'}`
+    state.saveToVault({ title: 'Ash Digest — Campfire Session', category: 'Recent Items', snippet: digest, format: 'md' })
+    set((current) => ({
+      burnTimer: { ...current.burnTimer, running: false },
+      activePage: 'page-vault',
+    }))
+  },
+  setSoundscape: (soundscapePreset) => set({ soundscapePreset }),
+  setSoundscapeVolume: (soundscapeVolume) => set({ soundscapeVolume }),
+  syncSquadView: (member) => {
+    const target = member === 'Nova' ? 'coders-developers' : member === 'Kai' ? 'study-group' : 'silent-coworking'
+    set({
+      activeSessionType: target,
+      activePage: 'page-workplace',
+      workspaceView: 'workplace',
+      pendingWorkplaceTool: member === 'Nova' ? 'ide' : member === 'Kai' ? 'study' : null,
+    })
+  },
 }), {
   name: 'campfire-settings',
   storage: createJSONStorage(() => localStorage),
@@ -262,5 +552,19 @@ export const useCampfireStore = create<CampfireStore>()(persist((set) => ({
     preferences: state.preferences,
     accounts: state.accounts,
     apps: state.apps,
+    activeSessionType: state.activeSessionType,
+    burnTimer: state.burnTimer,
+    ideCode: state.ideCode,
+    ideFileName: state.ideFileName,
+    editedCodeFiles: state.editedCodeFiles,
+    noteContent: state.noteContent,
+    whiteboardText: state.whiteboardText,
+    solvedDoubts: state.solvedDoubts,
+    blueprintMode: state.blueprintMode,
+    openWorkplaceCards: state.openWorkplaceCards,
+    workspaceSnapshots: state.workspaceSnapshots,
+    agentTasks: state.agentTasks,
+    soundscapePreset: state.soundscapePreset,
+    soundscapeVolume: state.soundscapeVolume,
   }),
 }))
