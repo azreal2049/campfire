@@ -18,6 +18,8 @@ import {
   X,
 } from 'lucide-react'
 import { useCampfireStore } from '../store/useCampfireStore'
+import type { CampfireSessionType } from '../bridge/rustBridge'
+import { SoundscapeControls } from '../components/SoundscapeControls'
 
 type SessionMode =
   | 'All Widgets'
@@ -41,6 +43,28 @@ const SESSION_MODES: SessionMode[] = [
   'VII. Official Works',
   'VIII. Silent Co-working',
 ]
+
+const MODE_TO_SESSION: Partial<Record<SessionMode, CampfireSessionType>> = {
+  'I. Study Group': 'study-group',
+  'II. Coders x Devs': 'coders-developers',
+  'III. Fun with Friends': 'fun-friends',
+  'IV. Musicians': 'musicians',
+  'V. Content Creators': 'content-creators',
+  'VI. Editors x VFX': 'editors-vfx',
+  'VII. Official Works': 'official-works',
+  'VIII. Silent Co-working': 'silent-coworking',
+}
+
+const SESSION_TO_MODE: Record<CampfireSessionType, SessionMode> = {
+  'study-group': 'I. Study Group',
+  'coders-developers': 'II. Coders x Devs',
+  'fun-friends': 'III. Fun with Friends',
+  musicians: 'IV. Musicians',
+  'content-creators': 'V. Content Creators',
+  'editors-vfx': 'VI. Editors x VFX',
+  'official-works': 'VII. Official Works',
+  'silent-coworking': 'VIII. Silent Co-working',
+}
 
 interface WidgetDef {
   id: string
@@ -67,39 +91,52 @@ const WIDGET_DEFS: WidgetDef[] = [
 export function PageWorkplace() {
   const saveToVault = useCampfireStore((state) => state.saveToVault)
   const toastMessage = useCampfireStore((state) => state.toastMessage)
+  const activeSessionType = useCampfireStore((state) => state.activeSessionType)
+  const setSessionType = useCampfireStore((state) => state.setSessionType)
+  const burnTimer = useCampfireStore((state) => state.burnTimer)
+  const setBurnMode = useCampfireStore((state) => state.setBurnMode)
+  const setBurnTimerRunning = useCampfireStore((state) => state.setBurnTimerRunning)
+  const setBurnTimerSeconds = useCampfireStore((state) => state.setBurnTimerSeconds)
+  const stokeFuel = useCampfireStore((state) => state.stokeFuel)
+  const ideCode = useCampfireStore((state) => state.ideCode)
+  const ideFileName = useCampfireStore((state) => state.ideFileName)
+  const updateIdeCode = useCampfireStore((state) => state.updateIdeCode)
+  const noteContent = useCampfireStore((state) => state.noteContent)
+  const updateNoteContent = useCampfireStore((state) => state.setNoteContent)
+  const agentTasks = useCampfireStore((state) => state.agentTasks)
+  const dispatchAgent = useCampfireStore((state) => state.dispatchAgent)
+  const markAgentRead = useCampfireStore((state) => state.markAgentRead)
+  const saveAgentOutput = useCampfireStore((state) => state.saveAgentOutput)
+  const pendingWorkplaceTool = useCampfireStore((state) => state.pendingWorkplaceTool)
+  const setPendingWorkplaceTool = useCampfireStore((state) => state.setPendingWorkplaceTool)
+  const snapshots = useCampfireStore((state) => state.workspaceSnapshots)
+  const saveWorkspaceSnapshot = useCampfireStore((state) => state.saveWorkspaceSnapshot)
+  const restoreWorkspaceSnapshot = useCampfireStore((state) => state.restoreWorkspaceSnapshot)
+  const endAndArchiveSession = useCampfireStore((state) => state.endAndArchiveSession)
+  const blueprintActive = useCampfireStore((state) => state.blueprintMode)
+  const setBlueprintMode = useCampfireStore((state) => state.setBlueprintMode)
+  const whiteboardText = useCampfireStore((state) => state.whiteboardText)
+  const solveDoubt = useCampfireStore((state) => state.solveDoubt)
+  const activePage = useCampfireStore((state) => state.activePage)
+  const stokePulse = useCampfireStore((state) => state.stokePulse)
 
   // ── States ──
   const [canvasTheme, setCanvasTheme] = useState<'obsidian' | 'daylight'>('obsidian')
-  const [selectedMode, setSelectedMode] = useState<SessionMode>('All Widgets')
-  const [blueprintActive, setBlueprintActive] = useState(false)
+  const [selectedMode, setSelectedMode] = useState<SessionMode>(SESSION_TO_MODE[activeSessionType])
   const [inspectedIndex, setInspectedIndex] = useState<number>(0)
   const [fullDevRigOpen, setFullDevRigOpen] = useState(false)
   const [fullStudyPodOpen, setFullStudyPodOpen] = useState(false)
   const [aiBotDrawerOpen, setAiBotDrawerOpen] = useState(false)
 
-  // 1. Focus Timer State
-  const [timerSeconds, setTimerSeconds] = useState(13 * 60 + 41)
-  const [isTimerRunning, setIsTimerRunning] = useState(false)
-  const [timerPhase, setTimerPhase] = useState<'Pomodoro' | 'Deadman'>('Pomodoro')
+  const timerSeconds = burnTimer.secondsRemaining
+  const isTimerRunning = burnTimer.running
+  const setTimerSeconds = (value: number | ((seconds: number) => number)) => {
+    setBurnTimerSeconds(typeof value === 'function' ? value(useCampfireStore.getState().burnTimer.secondsRemaining) : value)
+  }
+  const setIsTimerRunning = setBurnTimerRunning
 
-  // Timer Tick
-  useEffect(() => {
-    let interval: any = null
-    if (isTimerRunning) {
-      interval = setInterval(() => {
-        setTimerSeconds((sec) => (sec > 0 ? sec - 1 : 0))
-      }, 1000)
-    }
-    return () => clearInterval(interval)
-  }, [isTimerRunning])
-
-  // 2. Music State
-  const [isPlayingMusic, setIsPlayingMusic] = useState(false)
-  const [musicTrack, setMusicTrack] = useState('The Visit — Agar Agar')
-  const [trackProgress, setTrackProgress] = useState(147) // seconds (2:27)
-
-  // 3. Quick Note State
-  const [noteContent, setNoteContent] = useState('Leave a little room for the unexpected.')
+  // 2. Quick Note State
+  const setNoteContent = updateNoteContent
 
   // 4. Sprint State
   const [sprintStep, setSprintStep] = useState(1) // 0: Start, 1: Draft, 2: Review, 3: Ship
@@ -112,6 +149,17 @@ export function PageWorkplace() {
     (w) => selectedMode === 'All Widgets' || w.mode === selectedMode
   )
 
+  useEffect(() => {
+    setSelectedMode(SESSION_TO_MODE[activeSessionType])
+  }, [activeSessionType])
+
+  useEffect(() => {
+    if (activePage !== 'page-workplace' || !pendingWorkplaceTool) return
+    if (pendingWorkplaceTool === 'ide') setFullDevRigOpen(true)
+    if (pendingWorkplaceTool === 'study') setFullStudyPodOpen(true)
+    setPendingWorkplaceTool(null)
+  }, [activePage, pendingWorkplaceTool, setPendingWorkplaceTool])
+
   // Handle keyboard navigation in Blueprint mode
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -121,12 +169,12 @@ export function PageWorkplace() {
       } else if (e.key === 'ArrowRight') {
         setInspectedIndex((idx) => (idx < visibleWidgets.length - 1 ? idx + 1 : 0))
       } else if (e.key === 'Escape') {
-        setBlueprintActive(false)
+        setBlueprintMode(false)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [blueprintActive, visibleWidgets.length])
+  }, [blueprintActive, setBlueprintMode, visibleWidgets.length])
 
   // Format MM:SS
   const formatTime = (secs: number) => {
@@ -175,6 +223,8 @@ export function PageWorkplace() {
               key={mode}
               onClick={() => {
                 setSelectedMode(mode)
+                const sessionType = MODE_TO_SESSION[mode]
+                if (sessionType) setSessionType(sessionType)
                 setInspectedIndex(0)
               }}
               className={`rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition-all ${
@@ -195,7 +245,7 @@ export function PageWorkplace() {
         {/* Blueprint & Theme Controls */}
         <div className="flex items-center gap-2 mt-2 sm:mt-0">
           <button
-            onClick={() => setBlueprintActive(!blueprintActive)}
+            onClick={() => setBlueprintMode(!blueprintActive)}
             className={`flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-xs font-semibold transition ${
               blueprintActive
                 ? 'border-sky-500 bg-sky-500/20 text-sky-300 shadow-[0_0_12px_rgba(56,189,248,0.3)]'
@@ -207,6 +257,27 @@ export function PageWorkplace() {
             <Compass className="h-3.5 w-3.5 text-sky-400" />
             <span>{blueprintActive ? 'Exit Blueprint' : '🔍 Inspect / Blueprint Mode'}</span>
           </button>
+          <button
+            type="button"
+            onClick={() => saveWorkspaceSnapshot(window.prompt('Name this workspace snapshot') ?? '')}
+            className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-white/[0.08]"
+          >
+            🕒 Snapshots · Save
+          </button>
+          {snapshots.length > 0 && (
+            <select
+              aria-label="Restore workspace snapshot"
+              defaultValue=""
+              onChange={(event) => {
+                if (event.target.value) restoreWorkspaceSnapshot(event.target.value)
+                event.target.value = ''
+              }}
+              className="max-w-40 rounded-xl border border-white/10 bg-[#111115] px-2 py-1.5 text-[11px] text-zinc-300"
+            >
+              <option value="">Rewind…</option>
+              {snapshots.map((snapshot) => <option key={snapshot.id} value={snapshot.id}>{snapshot.name} · {snapshot.createdAt}</option>)}
+            </select>
+          )}
 
           <button
             onClick={() => setCanvasTheme(canvasTheme === 'obsidian' ? 'daylight' : 'obsidian')}
@@ -247,7 +318,7 @@ export function PageWorkplace() {
                 <button
                   onClick={() => {
                     setInspectedIndex(index)
-                    setBlueprintActive(true)
+                    setBlueprintMode(true)
                   }}
                   className="opacity-0 hover:opacity-100 transition text-[11px] font-mono text-sky-400 hover:underline"
                 >
@@ -272,14 +343,11 @@ export function PageWorkplace() {
                     isTimerRunning,
                     setIsTimerRunning,
                     setTimerSeconds,
-                    timerPhase,
-                    setTimerPhase,
-                    isPlayingMusic,
-                    setIsPlayingMusic,
-                    musicTrack,
-                    setMusicTrack,
-                    trackProgress,
-                    setTrackProgress,
+                    timerMode: burnTimer.mode,
+                    setTimerMode: setBurnMode,
+                    stokeFuel,
+                    stokePulse,
+                    endAndArchiveSession,
                     noteContent,
                     setNoteContent,
                     sprintStep,
@@ -287,6 +355,15 @@ export function PageWorkplace() {
                     selectedDay,
                     setSelectedDay,
                     saveToVault,
+                    ideCode,
+                    ideFileName,
+                    updateIdeCode,
+                    agentTasks,
+                    dispatchAgent,
+                    markAgentRead,
+                    saveAgentOutput,
+                    whiteboardText,
+                    solveDoubt,
                     setFullDevRigOpen,
                     setFullStudyPodOpen,
                     formatTime,
@@ -365,14 +442,11 @@ export function PageWorkplace() {
                     isTimerRunning,
                     setIsTimerRunning,
                     setTimerSeconds,
-                    timerPhase,
-                    setTimerPhase,
-                    isPlayingMusic,
-                    setIsPlayingMusic,
-                    musicTrack,
-                    setMusicTrack,
-                    trackProgress,
-                    setTrackProgress,
+                    timerMode: burnTimer.mode,
+                    setTimerMode: setBurnMode,
+                    stokeFuel,
+                    stokePulse,
+                    endAndArchiveSession,
                     noteContent,
                     setNoteContent,
                     sprintStep,
@@ -380,6 +454,15 @@ export function PageWorkplace() {
                     selectedDay,
                     setSelectedDay,
                     saveToVault,
+                    ideCode,
+                    ideFileName,
+                    updateIdeCode,
+                    agentTasks,
+                    dispatchAgent,
+                    markAgentRead,
+                    saveAgentOutput,
+                    whiteboardText,
+                    solveDoubt,
                     setFullDevRigOpen,
                     setFullStudyPodOpen,
                     formatTime,

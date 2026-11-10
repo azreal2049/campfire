@@ -16,6 +16,8 @@ export function AppShell({ children }: AppShellProps) {
   const setAssistantOpen = useCampfireStore((state) => state.setAssistantOpen)
   const agentTasks = useCampfireStore((state) => state.agentTasks)
   const dispatchAgent = useCampfireStore((state) => state.dispatchAgent)
+  const tickBurnTimer = useCampfireStore((state) => state.tickBurnTimer)
+  const registerActivity = useCampfireStore((state) => state.registerActivity)
   const openLitAFire = useCampfireStore((state) => state.openLitAFire)
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
 
@@ -29,6 +31,18 @@ export function AppShell({ children }: AppShellProps) {
     window.addEventListener('keydown', handleShortcut)
     return () => window.removeEventListener('keydown', handleShortcut)
   }, [])
+
+  useEffect(() => {
+    const timerId = window.setInterval(tickBurnTimer, 1000)
+    const noteActivity = () => registerActivity()
+    window.addEventListener('keydown', noteActivity)
+    window.addEventListener('pointerdown', noteActivity)
+    return () => {
+      window.clearInterval(timerId)
+      window.removeEventListener('keydown', noteActivity)
+      window.removeEventListener('pointerdown', noteActivity)
+    }
+  }, [registerActivity, tickBurnTimer])
 
   return (
     <div className="flex min-h-screen flex-col bg-[#070709] text-white">
