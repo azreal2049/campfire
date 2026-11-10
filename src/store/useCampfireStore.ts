@@ -104,6 +104,7 @@ interface CampfireStore {
   logOut: () => void
   setSessionType: (sessionType: CampfireSessionType) => void
   setBurnMode: (mode: BurnTimerState['mode']) => void
+  setPomodoroCycle: (focusMinutes: number, breakMinutes: number) => void
   setBurnTimerRunning: (running: boolean) => void
   setBurnTimerSeconds: (seconds: number) => void
   tickBurnTimer: () => void
@@ -112,6 +113,7 @@ interface CampfireStore {
   updateIdeCode: (code: string) => void
   pipeToIde: (content: string, fileName?: string) => void
   pipeToStudy: (content: string) => void
+  setWhiteboardText: (content: string) => void
   solveDoubt: (content: string) => void
   setNoteContent: (content: string) => void
   setBlueprintMode: (active: boolean) => void
@@ -374,6 +376,16 @@ export function solve(input: number[]) {
       warning: false,
     },
   })),
+  setPomodoroCycle: (focusMinutes, breakMinutes) => set((state) => ({
+    burnTimer: {
+      ...state.burnTimer,
+      focusMinutes,
+      breakMinutes,
+      ...(state.burnTimer.mode === 'pomodoro' && state.burnTimer.phase === 'focus'
+        ? { secondsRemaining: focusMinutes * 60 }
+        : {}),
+    },
+  })),
   setBurnTimerRunning: (running) => set((state) => ({
     burnTimer: { ...state.burnTimer, running, lastActivityAt: Date.now() },
   })),
@@ -444,6 +456,7 @@ export function solve(input: number[]) {
     pendingWorkplaceTool: 'study',
     activeSessionType: 'study-group',
   })),
+  setWhiteboardText: (whiteboardText) => set({ whiteboardText }),
   solveDoubt: (content) => {
     set((state) => ({
       solvedDoubts: [...state.solvedDoubts, content],

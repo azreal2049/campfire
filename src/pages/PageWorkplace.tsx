@@ -95,6 +95,7 @@ export function PageWorkplace() {
   const setSessionType = useCampfireStore((state) => state.setSessionType)
   const burnTimer = useCampfireStore((state) => state.burnTimer)
   const setBurnMode = useCampfireStore((state) => state.setBurnMode)
+  const setPomodoroCycle = useCampfireStore((state) => state.setPomodoroCycle)
   const setBurnTimerRunning = useCampfireStore((state) => state.setBurnTimerRunning)
   const setBurnTimerSeconds = useCampfireStore((state) => state.setBurnTimerSeconds)
   const stokeFuel = useCampfireStore((state) => state.stokeFuel)
@@ -116,7 +117,9 @@ export function PageWorkplace() {
   const blueprintActive = useCampfireStore((state) => state.blueprintMode)
   const setBlueprintMode = useCampfireStore((state) => state.setBlueprintMode)
   const whiteboardText = useCampfireStore((state) => state.whiteboardText)
+  const setWhiteboardText = useCampfireStore((state) => state.setWhiteboardText)
   const solveDoubt = useCampfireStore((state) => state.solveDoubt)
+  const setAssistantOpen = useCampfireStore((state) => state.setAssistantOpen)
   const activePage = useCampfireStore((state) => state.activePage)
   const stokePulse = useCampfireStore((state) => state.stokePulse)
 
@@ -126,7 +129,6 @@ export function PageWorkplace() {
   const [inspectedIndex, setInspectedIndex] = useState<number>(0)
   const [fullDevRigOpen, setFullDevRigOpen] = useState(false)
   const [fullStudyPodOpen, setFullStudyPodOpen] = useState(false)
-  const [aiBotDrawerOpen, setAiBotDrawerOpen] = useState(false)
 
   const timerSeconds = burnTimer.secondsRemaining
   const isTimerRunning = burnTimer.running
@@ -347,6 +349,7 @@ export function PageWorkplace() {
                     burnTimer,
                     timerTotalSeconds: burnTimer.mode === 'pomodoro' ? burnTimer.focusMinutes * 60 : 25 * 60,
                     setTimerMode: setBurnMode,
+                    setPomodoroCycle,
                     stokeFuel,
                     stokePulse,
                     endAndArchiveSession,
@@ -365,6 +368,7 @@ export function PageWorkplace() {
                     markAgentRead,
                     saveAgentOutput,
                     whiteboardText,
+                    setWhiteboardText,
                     solveDoubt,
                     setFullDevRigOpen,
                     setFullStudyPodOpen,
@@ -448,6 +452,7 @@ export function PageWorkplace() {
                     burnTimer,
                     timerTotalSeconds: burnTimer.mode === 'pomodoro' ? burnTimer.focusMinutes * 60 : 25 * 60,
                     setTimerMode: setBurnMode,
+                    setPomodoroCycle,
                     stokeFuel,
                     stokePulse,
                     endAndArchiveSession,
@@ -466,6 +471,7 @@ export function PageWorkplace() {
                     markAgentRead,
                     saveAgentOutput,
                     whiteboardText,
+                    setWhiteboardText,
                     solveDoubt,
                     setFullDevRigOpen,
                     setFullStudyPodOpen,
@@ -552,6 +558,9 @@ export function PageWorkplace() {
                     Multi-tab VS Code + Brave Preview
                   </span>
                 </div>
+                <button type="button" onClick={endAndArchiveSession} className="mr-3 border border-white/10 px-3 py-1.5 text-[11px] text-zinc-300 hover:bg-white/[0.05]">
+                  File ▾ · End &amp; Archive Ash
+                </button>
                 <button
                   onClick={() => setFullDevRigOpen(false)}
                   className="rounded-lg border border-white/10 bg-white/5 p-2 hover:bg-white/10 transition"
@@ -567,7 +576,7 @@ export function PageWorkplace() {
                   <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
                     <div className="flex items-center gap-2">
                       <span className="rounded bg-white/10 px-2 py-1 text-sky-300 font-semibold">
-                        main.ts
+                        {ideFileName}
                       </span>
                       <span className="text-zinc-600">shader.glsl</span>
                       <span className="text-zinc-600">app.tsx</span>
@@ -575,9 +584,11 @@ export function PageWorkplace() {
                     <button
                       onClick={() =>
                         saveToVault({
-                          title: 'Code & Shader Module (main.ts)',
+                          title: `Code Project (${ideFileName})`,
                           category: 'Code & Dev',
-                          snippet: 'export function renderFluidShader() { ... }',
+                          snippet: ideCode,
+                          fileName: ideFileName,
+                          format: ideFileName.split('.').pop() || 'txt',
                         })
                       }
                       className="flex items-center gap-1 rounded bg-orange-500/20 px-2.5 py-1 text-orange-300 hover:bg-orange-500/30 transition text-[11px]"
@@ -586,19 +597,13 @@ export function PageWorkplace() {
                     </button>
                   </div>
                   <textarea
-                    defaultValue={`// Campfire Fluid Shader & React 19 State Engine
-import { createStore } from 'zustand'
-
-export function renderFluidShader(gl: WebGLRenderingContext) {
-  const vertexShader = gl.createShader(gl.VERTEX_SHADER)
-  // Prismatic chromatic aberration & spring momentum
-  return { status: "compiled", fps: 60 }
-}`}
+                    value={ideCode}
+                    onChange={(event) => updateIdeCode(event.target.value)}
                     className="flex-1 w-full bg-transparent text-emerald-400 focus:outline-none resize-none font-mono text-xs leading-relaxed"
                   />
                   <div className="flex items-center justify-between border-t border-white/10 pt-3 mt-2">
-                    <span className="text-zinc-500">TypeScript · UTF-8 · 60 FPS</span>
-                    <button className="rounded bg-emerald-500 px-4 py-1.5 font-bold text-black hover:bg-emerald-400 transition">
+                    <span className="text-zinc-500">Local editor · UTF-8 · edits persist</span>
+                    <button onClick={stokeFuel} className="rounded bg-emerald-500 px-4 py-1.5 font-bold text-black hover:bg-emerald-400 transition">
                       ▶ Run Code
                     </button>
                   </div>
@@ -612,10 +617,13 @@ export function renderFluidShader(gl: WebGLRenderingContext) {
                     </div>
                     <div className="flex-1 rounded-xl border border-dashed border-white/10 bg-black/60 p-6 flex flex-col items-center justify-center text-center">
                       <Sparkles className="h-8 w-8 text-sky-400 mb-2" />
-                      <p className="text-sm font-semibold text-white">Live App Canvas Preview</p>
+                      <p className="text-sm font-semibold text-white">App Testing Window</p>
                       <p className="text-xs text-zinc-500 mt-1">
-                        Hot reloading enabled. All state changes sync instantly.
+                          Run Code adds timer fuel. Review agent-generated assertions below.
                       </p>
+                      {agentTasks.filter((task) => task.kind === 'code-audit').map((task) => (
+                        <pre key={task.id} className="mt-4 max-h-40 w-full overflow-auto whitespace-pre-wrap rounded border border-white/10 bg-black/40 p-3 text-left text-[10px] text-zinc-300">{task.output || 'Audit running…'}</pre>
+                      ))}
                     </div>
                   </div>
 
@@ -684,14 +692,17 @@ export function renderFluidShader(gl: WebGLRenderingContext) {
                     </div>
                   </div>
 
-                  <div className="my-auto text-center space-y-3">
-                    <p className="text-lg font-mono text-amber-300">
-                      SN1 vs SN2 Reaction Mechanisms & Carbocation Stability
-                    </p>
-                    <div className="inline-block rounded-xl border border-white/10 bg-white/[0.03] p-4 text-xs font-mono text-zinc-300 text-left space-y-1">
-                      <p>1. SN1: 2-Step mechanism, Tertiary &gt; Secondary carbocation</p>
-                      <p>2. SN2: 1-Step backside attack, Primary &gt; Secondary substrate</p>
-                    </div>
+                  <div className="my-auto space-y-3">
+                  <p className="text-center text-lg font-mono text-amber-300">Shared Study Whiteboard</p>
+                  <textarea
+                    value={whiteboardText}
+                    onChange={(event) => setWhiteboardText(event.target.value)}
+                    placeholder="Paste a question, doubt, or study note here…"
+                    className="min-h-32 w-full resize-y rounded-xl border border-white/10 bg-black/40 p-4 text-xs leading-relaxed text-zinc-300 outline-none focus:border-white/20"
+                  />
+                  {agentTasks.filter((task) => task.kind === 'study').slice(0, 1).map((task) => (
+                    <pre key={task.id} className="max-h-40 overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-black/40 p-3 text-[10px] leading-relaxed text-zinc-300">{task.output || 'Generating study deck…'}</pre>
+                  ))}
                   </div>
 
                   <div className="flex items-center justify-between border-t border-white/10 pt-3">
@@ -700,13 +711,20 @@ export function renderFluidShader(gl: WebGLRenderingContext) {
                         saveToVault({
                           title: 'Organic Chemistry SN1/SN2 Mindmap',
                           category: 'Study Notes',
-                          snippet: '1. SN1: 2-Step mechanism ... 2. SN2: 1-Step backside attack ...',
+                          snippet: whiteboardText,
                         })
                       }
                       className="flex items-center gap-1.5 rounded-xl border border-orange-500/30 bg-orange-500/20 px-4 py-2 text-xs font-semibold text-orange-200 hover:bg-orange-500/30 transition"
                     >
                       <Sparkles className="h-4 w-4 text-orange-400" />
                       🧠 1-Click AI Mindmap &amp; Export to Vault
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void dispatchAgent('study')}
+                      className="rounded-xl border border-white/10 px-3 py-2 text-[11px] text-zinc-300 hover:bg-white/[0.05]"
+                    >
+                      Generate flashcards
                     </button>
                   </div>
                 </div>
@@ -721,24 +739,21 @@ export function renderFluidShader(gl: WebGLRenderingContext) {
 
                     <div className="rounded-xl border border-white/10 bg-black/40 p-3 text-xs space-y-2">
                       <p className="font-semibold text-amber-300">Question:</p>
-                      <p className="text-zinc-300">
-                        Find max sum sliding window of size k in O(n) time.
-                      </p>
-                      <p className="font-semibold text-emerald-400 pt-2 border-t border-white/10">
-                        Solvely Step 1:
-                      </p>
-                      <p className="text-zinc-400">
-                        Maintain a monotonic decreasing deque storing indices.
-                      </p>
+                      <p className="whitespace-pre-wrap text-zinc-300">{whiteboardText || 'Enter a question below to work through it step-by-step.'}</p>
                     </div>
                   </div>
 
                   <div className="pt-3 border-t border-white/10">
-                    <input
-                      type="text"
-                      placeholder="Ask Socratic Doubt Tutor..."
-                      className="w-full rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none"
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={whiteboardText}
+                        onChange={(event) => setWhiteboardText(event.target.value)}
+                        placeholder="Ask Socratic Doubt Tutor..."
+                        className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none"
+                      />
+                      <button type="button" onClick={() => solveDoubt(whiteboardText)} className="rounded-lg bg-white px-3 py-2 text-[10px] font-semibold text-black">Solve</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -747,54 +762,56 @@ export function renderFluidShader(gl: WebGLRenderingContext) {
         )}
       </AnimatePresence>
 
-      {/* ── GLOBAL PERSISTENT AI BOT FLOATING BUTTON & DRAWER ── */}
+      {/* ── GLOBAL AI ASSISTANT ENTRY ── */}
       <div className="fixed bottom-6 right-6 z-40">
         <button
-          onClick={() => setAiBotDrawerOpen(!aiBotDrawerOpen)}
+          onClick={() => setAssistantOpen(true)}
           className="flex items-center gap-2 rounded-full border border-violet-500/40 bg-violet-600/90 px-4 py-2.5 text-xs font-semibold text-white shadow-2xl backdrop-blur-md transition hover:bg-violet-500 active:scale-95"
         >
           <Bot className="h-4 w-4" />
           <span>🤖 AI Bot</span>
         </button>
+      </div>
+    </div>
+  )
+}
 
-        <AnimatePresence>
-          {aiBotDrawerOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              className="absolute bottom-14 right-0 w-80 rounded-2xl border border-violet-500/30 bg-[#0c0d14] p-4 shadow-2xl backdrop-blur-2xl text-white space-y-3"
-            >
-              <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                <span className="text-xs font-bold text-violet-300 flex items-center gap-1.5">
-                  <Bot className="h-4 w-4 text-violet-400" />
-                  Campfire AI Assistant
-                </span>
-                <button
-                  onClick={() => setAiBotDrawerOpen(false)}
-                  className="text-zinc-500 hover:text-white text-xs"
-                >
-                  ✕
-                </button>
-              </div>
+function AgentInbox(props: any) {
+  const unreadCount = props.agentTasks.filter((task: { read: boolean }) => !task.read).length
+  const taskKinds = [
+    { kind: 'study', label: '🧬 Study & Flashcards' },
+    { kind: 'code-audit', label: '💻 Code Audit & Tests' },
+    { kind: 'creator', label: '🎬 Creator Storyboard' },
+  ]
 
-              <div className="rounded-xl border border-white/10 bg-black/40 p-3 text-xs text-zinc-300 leading-relaxed">
-                👋 Reading workplace context: <strong>{selectedMode}</strong> mode active. Ask me to draft notes, compile code, or solve doubts!
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="text"
-                  placeholder="Ask AI bot anything..."
-                  className="flex-1 rounded-xl border border-white/10 bg-black/60 px-3 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none"
-                />
-                <button className="rounded-xl bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-500 transition">
-                  <Send className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+  return (
+    <div className="flex h-full flex-col p-5">
+      <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold">Inbox</span>
+          <span className="rounded-full border border-orange-500/40 bg-orange-500/20 px-2 py-0.5 text-[10px] font-bold text-orange-300">{unreadCount} unread</span>
+        </div>
+        <span className="text-[10px] text-zinc-500">Local agents</span>
+      </div>
+      <div className="mb-3 flex flex-wrap gap-1">
+        {taskKinds.map((task) => (
+          <button key={task.kind} type="button" onClick={() => void props.dispatchAgent(task.kind)} className="rounded border border-white/10 px-2 py-1 text-[9px] text-zinc-300 hover:bg-white/[0.05]">
+            {task.label}
+          </button>
+        ))}
+      </div>
+      <div className="min-h-0 flex-1 space-y-2 overflow-auto text-xs">
+        {props.agentTasks.length === 0 && <p className="rounded border border-white/[0.08] p-3 text-zinc-500">Agent results and study packs appear here.</p>}
+        {props.agentTasks.slice(0, 3).map((task: { id: string; title: string; createdAt: string; status: string; output: string; read: boolean }) => (
+          <article key={task.id} onClick={() => props.markAgentRead(task.id)} className={`rounded-xl border p-2.5 ${task.read ? 'border-white/[0.08] bg-white/[0.02]' : 'border-sky-500/20 bg-sky-500/[0.04]'}`}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-semibold text-zinc-200">{task.title}</span>
+              <span className="shrink-0 text-[9px] text-zinc-600">{task.status} · {task.createdAt}</span>
+            </div>
+            {task.output ? <pre className="mt-2 max-h-20 overflow-auto whitespace-pre-wrap text-[10px] leading-relaxed text-zinc-400">{task.output}</pre> : <p className="mt-1 text-zinc-500">Generating locally…</p>}
+            {task.output && <button type="button" onClick={(event) => { event.stopPropagation(); props.saveAgentOutput(task.id) }} className="mt-2 text-[10px] text-orange-300 hover:text-orange-200">📌 Save Output to Personal Vault</button>}
+          </article>
+        ))}
       </div>
     </div>
   )
@@ -856,6 +873,20 @@ function renderWidgetContent(
 
           {/* Controls */}
           <div className="flex items-center justify-center gap-2 pt-1 border-t border-white/10">
+            {props.timerMode === 'pomodoro' && (
+              <select
+                value={props.burnTimer.focusMinutes}
+                onChange={(event) => {
+                  const minutes = Number(event.target.value)
+                  props.setPomodoroCycle(minutes, minutes === 50 ? 10 : 5)
+                }}
+                aria-label="Pomodoro cycle length"
+                className="rounded-full border border-white/10 bg-[#15171c] px-2 py-1 text-[10px] text-zinc-300"
+              >
+                <option value="25">25 / 5</option>
+                <option value="50">50 / 10</option>
+              </select>
+            )}
             <button
               onClick={() => props.setTimerSeconds(props.burnTimer.mode === 'pomodoro' ? props.burnTimer.focusMinutes * 60 : 25 * 60)}
               className="rounded-full border border-white/10 bg-white/5 p-2 text-zinc-300 hover:bg-white/10"
