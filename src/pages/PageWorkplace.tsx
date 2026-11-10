@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   RotateCcw,
@@ -17,7 +17,7 @@ import {
   X,
 } from 'lucide-react'
 import { useCampfireStore } from '../store/useCampfireStore'
-import type { AgentKind, AgentTask, CampfireSessionType } from '../bridge/rustBridge'
+import { scoreDuelSubmissions, type AgentKind, type AgentTask, type CampfireSessionType, type DuelScore } from '../bridge/rustBridge'
 import { SoundscapeControls } from '../components/SoundscapeControls'
 
 type SessionMode =
@@ -73,7 +73,7 @@ interface WidgetDef {
 }
 
 const WIDGET_DEFS: WidgetDef[] = [
-  { id: 'focus-timer', label: 'Focus timer', height: 304, mode: 'VIII. Silent Co-working' },
+  { id: 'focus-timer', label: 'Focus timer', height: 352, mode: 'VIII. Silent Co-working' },
   { id: 'inbox-agents', label: 'Inbox — Autonomous Multi-Agent Feed', height: 340, mode: 'VII. Official Works' },
   { id: 'quick-note', label: 'Quick note', height: 246, mode: 'I. Study Group' },
   { id: 'music-deck', label: 'Music — Focus Soundscape', height: 180, mode: 'IV. Musicians' },
@@ -121,12 +121,36 @@ export function PageWorkplace() {
   const setAssistantOpen = useCampfireStore((state) => state.setAssistantOpen)
   const syncSquadView = useCampfireStore((state) => state.syncSquadView)
   const stokePulse = useCampfireStore((state) => state.stokePulse)
+  const portalDrops = useCampfireStore((state) => state.portalDrops)
+  const portalToastActionId = useCampfireStore((state) => state.portalToastActionId)
+  const addPortalDrop = useCampfireStore((state) => state.addPortalDrop)
+  const insertPortalDrop = useCampfireStore((state) => state.insertPortalDrop)
+  const sparkBalance = useCampfireStore((state) => state.sparkBalance)
+  const sparkContract = useCampfireStore((state) => state.sparkContract)
+  const startSparkContract = useCampfireStore((state) => state.startSparkContract)
+  const verifySparkContract = useCampfireStore((state) => state.verifySparkContract)
+  const activeGlassTheme = useCampfireStore((state) => state.activeGlassTheme)
+  const momentum = useCampfireStore((state) => state.momentum)
+  const recordWorkspaceRevision = useCampfireStore((state) => state.recordWorkspaceRevision)
+  const pipeToIde = useCampfireStore((state) => state.pipeToIde)
+  const portalToastDrop = portalDrops.find((drop) => drop.id === portalToastActionId)
 
   // ── States ──
   const [canvasTheme, setCanvasTheme] = useState<'obsidian' | 'daylight'>('obsidian')
   const [allWidgetsSelected, setAllWidgetsSelected] = useState(false)
   const selectedMode = allWidgetsSelected ? 'All Widgets' : SESSION_TO_MODE[activeSessionType]
   const [inspectedIndex, setInspectedIndex] = useState<number>(0)
+  const [sparkGoal, setSparkGoal] = useState('')
+  const [portalOpen, setPortalOpen] = useState(false)
+  const [duelOpen, setDuelOpen] = useState(false)
+  const [duelSubmitted, setDuelSubmitted] = useState(false)
+  const [duelSolution, setDuelSolution] = useState('')
+  const [duelSeconds, setDuelSeconds] = useState(300)
+  const [opponentProgress, setOpponentProgress] = useState(18)
+  const [duelScore, setDuelScore] = useState<DuelScore | null>(null)
+  const [browserClip, setBrowserClip] = useState('')
+  const [browserSource, setBrowserSource] = useState('https://localhost:3000/preview')
+  const lastRevisionRef = useRef({ ideCode, noteContent, whiteboardText })
   const fullDevRigOpen = pendingWorkplaceTool === 'ide'
   const fullStudyPodOpen = pendingWorkplaceTool === 'study'
   const setFullDevRigOpen = (open: boolean) => setPendingWorkplaceTool(open ? 'ide' : null)
@@ -152,6 +176,41 @@ export function PageWorkplace() {
   const visibleWidgets = WIDGET_DEFS.filter(
     (w) => selectedMode === 'All Widgets' || w.mode === selectedMode
   )
+  const isDuelEligible = activeSessionType === 'study-group' || activeSessionType === 'coders-developers'
+  const cardAura = momentum === 'typing' ? 'border-amber-300/40' : momentum === 'success' ? 'border-emerald-300/50' : 'border-cyan-300/25'
+  const glassSurface = activeGlassTheme === 'glass-ember' ? 'bg-[#17110D]' : activeGlassTheme === 'glass-frost' ? 'bg-[#0C1317]' : ''
+
+  useEffect(() => {
+    const previous = lastRevisionRef.current
+    const changedCode = previous.ideCode !== ideCode
+    const changedNote = previous.noteContent !== noteContent
+    const changedBoard = previous.whiteboardText !== whiteboardText
+    lastRevisionRef.current = { ideCode, noteContent, whiteboardText }
+    if (!changedCode && !changedNote && !changedBoard) return
+    const timeout = window.setTimeout(() => {
+      if (changedCode) recordWorkspaceRevision('code', ideCode, ideFileName)
+      if (changedNote) recordWorkspaceRevision('note', noteContent)
+      if (changedBoard) recordWorkspaceRevision('whiteboard', whiteboardText)
+    }, 750)
+    return () => window.clearTimeout(timeout)
+  }, [ideCode, ideFileName, noteContent, recordWorkspaceRevision, whiteboardText])
+
+  useEffect(() => {
+    if (!duelOpen || duelSubmitted) return
+    const timer = window.setInterval(() => {
+      setDuelSeconds((seconds) => Math.max(0, seconds - 1))
+      setOpponentProgress((progress) => Math.min(96, progress + Math.ceil(Math.random() * 5)))
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [duelOpen, duelSubmitted])
+
+  const submitDuel = () => {
+    setDuelSubmitted(true)
+    const opponent = 'Step 1: Identify the inputs.\nStep 2: Track the current state once per item.\nStep 3: Return the verified result in linear time.'
+    void scoreDuelSubmissions('Explain a clear, correct solution to the current session challenge.', duelSolution, opponent)
+      .then(setDuelScore)
+      .catch(() => setDuelScore(null))
+  }
 
   // Handle keyboard navigation in Blueprint mode
   useEffect(() => {
@@ -197,6 +256,11 @@ export function PageWorkplace() {
           >
             <Sparkles className="h-4 w-4 text-orange-400" />
             {toastMessage}
+            {portalToastActionId && (
+              <button type="button" onClick={() => insertPortalDrop(portalToastActionId, portalToastDrop?.kind === 'code' ? 'ide' : 'whiteboard')} className="ml-1 border border-white/20 px-2 py-1 text-[10px] text-white hover:bg-white/[0.08]">
+                ⚡ Insert into My Active Tool
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -296,6 +360,22 @@ export function PageWorkplace() {
               </>
             )}
           </button>
+          {isDuelEligible && (
+            <button
+              type="button"
+              onClick={() => {
+                setDuelOpen(true)
+                setDuelSubmitted(false)
+                setDuelScore(null)
+                setDuelSeconds(300)
+                setDuelSolution('')
+                setOpponentProgress(18)
+              }}
+              className="border border-amber-400/25 bg-amber-400/[0.05] px-3 py-1.5 text-[11px] text-amber-200 transition-colors hover:bg-amber-400/10"
+            >
+              ⚔️ 5-Min Squad Duel
+            </button>
+          )}
         </div>
       </div>
 
@@ -324,9 +404,9 @@ export function PageWorkplace() {
 
               {/* Card Container */}
               <div
-                className={`rounded-[24px] border shadow-xl transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] overflow-hidden ${
+                className={`rounded-[24px] border ${cardAura} ${glassSurface} shadow-xl transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] overflow-hidden ${
                   canvasTheme === 'obsidian'
-                    ? 'border-white/[0.08] bg-[#111115]'
+                    ? (glassSurface || 'bg-[#111115]')
                     : 'border-black/[0.08] bg-white'
                 }`}
                 style={{ minHeight: `${widget.height}px` }}
@@ -347,6 +427,12 @@ export function PageWorkplace() {
                     stokeFuel,
                     stokePulse,
                     endAndArchiveSession,
+                    sparkBalance,
+                    sparkContract,
+                    sparkGoal,
+                    setSparkGoal,
+                    startSparkContract,
+                    verifySparkContract,
                     noteContent,
                     setNoteContent,
                     sprintStep,
@@ -363,8 +449,16 @@ export function PageWorkplace() {
                     saveAgentOutput,
                     whiteboardText,
                     setWhiteboardText,
+                    pipeToIde,
+                    browserClip,
+                    setBrowserClip,
+                    browserSource,
+                    setBrowserSource,
                     solveDoubt,
                     syncSquadView,
+                    portalDrops,
+                    addPortalDrop,
+                    insertPortalDrop,
                     setFullDevRigOpen,
                     setFullStudyPodOpen,
                     formatTime,
@@ -428,9 +522,9 @@ export function PageWorkplace() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: 'spring', stiffness: 220, damping: 22 }}
-                className={`rounded-[24px] border shadow-2xl overflow-hidden transition-all duration-500 ${
+                className={`rounded-[24px] border ${cardAura} ${glassSurface} shadow-2xl overflow-hidden transition-all duration-500 ${
                   canvasTheme === 'obsidian'
-                    ? 'border-white/[0.12] bg-[#111115]'
+                    ? (glassSurface || 'bg-[#111115]')
                     : 'border-black/[0.12] bg-white'
                 }`}
                 style={{ minHeight: `${inspectedWidget.height}px` }}
@@ -451,6 +545,12 @@ export function PageWorkplace() {
                     stokeFuel,
                     stokePulse,
                     endAndArchiveSession,
+                    sparkBalance,
+                    sparkContract,
+                    sparkGoal,
+                    setSparkGoal,
+                    startSparkContract,
+                    verifySparkContract,
                     noteContent,
                     setNoteContent,
                     sprintStep,
@@ -467,8 +567,16 @@ export function PageWorkplace() {
                     saveAgentOutput,
                     whiteboardText,
                     setWhiteboardText,
+                    pipeToIde,
+                    browserClip,
+                    setBrowserClip,
+                    browserSource,
+                    setBrowserSource,
                     solveDoubt,
                     syncSquadView,
+                    portalDrops,
+                    addPortalDrop,
+                    insertPortalDrop,
                     setFullDevRigOpen,
                     setFullStudyPodOpen,
                     formatTime,
@@ -621,6 +729,19 @@ export function PageWorkplace() {
                         <pre key={task.id} className="mt-4 max-h-40 w-full overflow-auto whitespace-pre-wrap rounded border border-white/10 bg-black/40 p-3 text-left text-[10px] text-zinc-300">{task.output || 'Audit running…'}</pre>
                       ))}
                     </div>
+                    <div className="mt-3 space-y-2 border-t border-white/[0.08] pt-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-medium text-zinc-300">Browser-to-Canvas Clipper</span>
+                        <button type="button" onClick={() => setBrowserClip(window.getSelection()?.toString() ?? '')} className="text-[9px] text-cyan-200 hover:text-white">⚡ Snap Selection</button>
+                      </div>
+                      <input value={props.browserSource} onChange={(event) => props.setBrowserSource(event.target.value)} aria-label="Browser source URL" className="h-7 w-full border border-white/[0.08] bg-black/30 px-2 text-[10px] text-zinc-400 outline-none focus:border-white/20" />
+                      <textarea value={props.browserClip} onChange={(event) => props.setBrowserClip(event.target.value)} aria-label="Selected browser text" placeholder="Highlighted text, formula, or code…" className="h-14 w-full resize-none border border-white/[0.08] bg-black/30 p-2 text-[10px] text-zinc-300 outline-none placeholder:text-zinc-600 focus:border-white/20" />
+                      <div className="grid grid-cols-3 gap-1.5">
+                        <button type="button" disabled={!props.browserClip.trim()} onClick={() => { props.setWhiteboardText(`${useCampfireStore.getState().whiteboardText}\n\n${props.browserClip}\n\nSource: ${props.browserSource}`.trim()); props.setBrowserClip('') }} className="border border-white/10 py-1.5 text-[9px] text-zinc-300 hover:bg-white/[0.05] disabled:opacity-40">To Whiteboard</button>
+                        <button type="button" disabled={!props.browserClip.trim()} onClick={() => { props.pipeToIde(`// Source: ${props.browserSource}\n${props.browserClip}`, 'browser-reference.txt'); props.setBrowserClip('') }} className="border border-white/10 py-1.5 text-[9px] text-zinc-300 hover:bg-white/[0.05] disabled:opacity-40">To IDE</button>
+                        <button type="button" disabled={!props.browserClip.trim()} onClick={() => props.addPortalDrop('reference', props.browserClip, props.browserSource)} className="border border-white/10 py-1.5 text-[9px] text-zinc-300 hover:bg-white/[0.05] disabled:opacity-40">To Portal</button>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Command Terminal */}
@@ -758,6 +879,94 @@ export function PageWorkplace() {
         )}
       </AnimatePresence>
 
+      <div className="fixed bottom-6 left-6 z-40">
+        {portalOpen && (
+          <section aria-label="Ember Portal" className="mb-3 w-[min(90vw,360px)] border border-cyan-300/20 bg-[#0C0C0C]/95 p-4 shadow-2xl backdrop-blur-xl">
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <h2 className="text-[13px] font-medium text-white">🌀 Ember Portal</h2>
+                <p className="mt-1 text-[10px] text-zinc-500">Workspace drop feed · local-first, not yet synced across devices</p>
+              </div>
+              <button type="button" onClick={() => setPortalOpen(false)} aria-label="Close Ember Portal" className="text-zinc-500 hover:text-white"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="mb-3 grid grid-cols-3 gap-1.5">
+              {[
+                { kind: 'code' as const, label: 'IDE code', content: ideCode, source: ideFileName },
+                { kind: 'note' as const, label: 'Quick note', content: noteContent, source: 'Quick Note' },
+                { kind: 'whiteboard' as const, label: 'Whiteboard', content: whiteboardText, source: 'Common Whiteboard' },
+              ].map((item) => (
+                <button key={item.kind} type="button" draggable onDragStart={(event) => { event.dataTransfer.setData('text/plain', item.content); event.dataTransfer.setData('application/x-campfire-source', item.source); event.dataTransfer.setData('application/x-campfire-kind', item.kind) }} onClick={() => addPortalDrop(item.kind, item.content, item.source)} className="border border-white/[0.08] px-2 py-2 text-[10px] text-zinc-400 hover:bg-white/[0.04]">
+                  Drag / Send {item.label}
+                </button>
+              ))}
+            </div>
+            <div className="max-h-64 space-y-2 overflow-auto">
+              {portalDrops.length === 0 && <p className="border border-dashed border-white/[0.1] p-4 text-center text-[11px] text-zinc-600">Drop code, notes, or references here to add them to the feed.</p>}
+              {portalDrops.map((drop) => (
+                <article key={drop.id} className="border border-white/[0.08] bg-white/[0.02] p-2.5">
+                  <div className="flex items-center justify-between text-[9px] text-zinc-600"><span>{drop.kind} · {drop.source}</span><span>{drop.createdAt}</span></div>
+                  <p className="mt-1 line-clamp-2 whitespace-pre-wrap font-mono text-[10px] text-zinc-400">{drop.content}</p>
+                  <button type="button" onClick={() => insertPortalDrop(drop.id, drop.kind === 'code' ? 'ide' : 'whiteboard')} className="mt-2 border border-white/[0.12] px-2.5 py-1 text-[10px] text-white hover:bg-white/[0.06]">⚡ Insert into My Active Tool</button>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setPortalOpen((open) => !open)}
+          onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setPortalOpen((open) => !open) }}
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={(event) => {
+            event.preventDefault()
+            const content = event.dataTransfer.getData('text/plain')
+            const kind = event.dataTransfer.getData('application/x-campfire-kind')
+            const source = event.dataTransfer.getData('application/x-campfire-source') || 'Dropped reference'
+            const validKind = kind === 'code' || kind === 'note' || kind === 'whiteboard' ? kind : 'reference'
+            addPortalDrop(validKind, content, source)
+            setPortalOpen(true)
+          }}
+          className="flex h-12 cursor-pointer items-center gap-2 rounded-full border border-cyan-300/25 bg-[#0C0C0C]/95 px-4 text-[12px] font-medium text-cyan-100 shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-colors hover:border-cyan-200/50"
+        >
+          🌀 Portal Drop <span className="text-[10px] text-zinc-500">{portalDrops.length || 'Drop here'}</span>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {duelOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
+            <section role="dialog" aria-modal="true" aria-labelledby="duel-title" className="w-full max-w-4xl border border-white/[0.12] bg-[#0C0C0C] text-white shadow-2xl">
+              <header className="flex items-center justify-between border-b border-white/[0.08] px-5 py-4">
+                <div><h2 id="duel-title" className="text-[15px] font-medium">⚔️ Five-Minute Squad Duel</h2><p className="mt-1 text-[11px] text-zinc-500">Local challenge preview · opponent progress is simulated without a room sync service.</p></div>
+                <div className="flex items-center gap-3"><span className="font-mono text-[13px] text-amber-200">{formatTime(duelSeconds)}</span><button type="button" onClick={() => setDuelOpen(false)} aria-label="Close duel" className="text-zinc-500 hover:text-white"><X className="h-4 w-4" /></button></div>
+              </header>
+              <div className="grid gap-4 p-5 md:grid-cols-2">
+                <div className="space-y-3">
+                  <div className="border border-white/[0.08] bg-white/[0.02] p-4"><p className="text-[10px] uppercase tracking-wider text-zinc-500">Shared challenge</p><p className="mt-2 text-[13px] leading-relaxed text-zinc-200">Explain a clear, correct solution to a problem from your active {activeSessionType === 'study-group' ? 'study session' : 'code sprint'}. Show the key steps and verify the result.</p></div>
+                  {!duelSubmitted ? (
+                    <textarea value={duelSolution} onChange={(event) => setDuelSolution(event.target.value)} aria-label="Your duel solution" placeholder="Write your solution or steps…" className="min-h-36 w-full resize-y border border-white/[0.1] bg-black/30 p-3 text-[12px] text-white outline-none placeholder:text-zinc-600 focus:border-white/25" />
+                  ) : (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="border border-cyan-300/20 p-3"><h3 className="text-[11px] text-cyan-100">Your solution</h3><p className="mt-2 whitespace-pre-wrap text-[11px] text-zinc-400">{duelSolution || 'No solution submitted.'}</p></div>
+                      <div className="border border-white/[0.08] p-3"><h3 className="text-[11px] text-zinc-300">Opponent solution</h3><p className="mt-2 whitespace-pre-wrap text-[11px] text-zinc-500">Step 1: Identify the inputs.{'\n'}Step 2: Track the current state once per item.{'\n'}Step 3: Return the verified result in linear time.</p></div>
+                    </div>
+                  )}
+                  {duelScore && <div className="flex flex-wrap gap-3 border border-white/[0.08] p-3 text-[10px] text-zinc-300"><span>Speed {duelScore.speed}</span><span>Clarity {duelScore.clarity}</span><span>Accuracy {duelScore.accuracy}</span><span className="ml-auto text-zinc-600">{duelScore.source === 'local-model' ? 'Local AI model' : 'Local rubric fallback'}</span></div>}
+                </div>
+                <div className="border border-white/[0.08] bg-white/[0.02] p-4">
+                  <div className="flex items-center justify-between"><h3 className="text-[11px] font-medium text-zinc-200">Opponent progress</h3><span className="text-[10px] text-zinc-600">Demo opponent</span></div>
+                  <p className="mt-1 text-[10px] text-zinc-500">{activeSessionType === 'study-group' ? 'Steps solved' : 'Lines written'}</p>
+                  <div className="mt-3 h-2 overflow-hidden bg-white/[0.06]"><div style={{ width: `${opponentProgress}%` }} className={`h-full bg-cyan-300 transition-[width] duration-700 ${duelSubmitted ? '' : 'blur-[2px]'}`} /></div>
+                  <p className="mt-2 font-mono text-[11px] text-zinc-500">{duelSubmitted ? `${opponentProgress}% complete` : 'Progress concealed until reveal'}</p>
+                  {!duelSubmitted && <button type="button" onClick={submitDuel} disabled={!duelSolution.trim()} className="mt-6 w-full border border-white/20 bg-white px-4 py-2 text-[12px] font-medium text-black hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40">Submit &amp; Reveal</button>}
+                </div>
+              </div>
+            </section>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── GLOBAL AI ASSISTANT ENTRY ── */}
       <div className="fixed bottom-6 right-6 z-40">
         <button
@@ -834,6 +1043,8 @@ function renderWidgetContent(
         <div className={`h-full bg-gradient-to-br from-[#111827] via-[#0F172A] to-[#090D16] p-6 text-white ${props.stokePulse ? 'shadow-[inset_0_0_42px_rgba(251,146,60,0.42)]' : ''} ${props.burnTimer.warning ? 'opacity-75' : ''} flex flex-col justify-between`}>
           <div className="flex items-center justify-between text-xs font-medium">
             <span className="text-zinc-400 uppercase tracking-wider">{props.timerMode} · {props.burnTimer.phase}</span>
+            <div className="flex items-center gap-2">
+            <span className="text-[10px] text-amber-200">🔥 {props.sparkBalance}</span>
             <select
               value={props.timerMode}
               onChange={(event) => props.setTimerMode(event.target.value)}
@@ -844,6 +1055,7 @@ function renderWidgetContent(
               <option value="countdown">Countdown</option>
               <option value="deadman">Deadman</option>
             </select>
+            </div>
           </div>
 
           {/* SVG Dial with 60 ticks */}
@@ -912,6 +1124,19 @@ function renderWidgetContent(
             >
               🔥 Stoke (+5m)
             </button>
+          </div>
+          <div className="border-t border-white/10 pt-2">
+            {props.sparkContract && (
+              <p className="mb-1 truncate text-[10px] text-zinc-400">
+                Contract: {props.sparkContract.goal} · {props.sparkContract.status === 'active' ? '25 staked · +50 on completion' : 'verified'}
+              </p>
+            )}
+            {props.sparkContract?.status !== 'active' && (
+              <div className="flex gap-2">
+                <input value={props.sparkGoal} onChange={(event) => props.setSparkGoal(event.target.value)} aria-label="Spark contract goal" placeholder="One-line session goal…" className="h-8 min-w-0 flex-1 border border-white/[0.1] bg-black/30 px-2 text-[10px] text-white outline-none placeholder:text-zinc-600 focus:border-white/25" />
+                <button type="button" onClick={() => { if (props.startSparkContract(props.sparkGoal)) props.setSparkGoal('') }} className="shrink-0 border border-amber-300/25 px-2 text-[10px] text-amber-200 hover:bg-amber-300/[0.06]">Stake 25 ✦</button>
+              </div>
+            )}
           </div>
           <button type="button" onClick={props.endAndArchiveSession} className="mt-2 border-t border-white/10 pt-2 text-[10px] text-zinc-500 transition-colors hover:text-orange-200">
             ⚱️ End Session &amp; Save Digest

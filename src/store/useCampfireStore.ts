@@ -54,6 +54,16 @@ export interface SettingsPreferences {
   ipcTelemetry: boolean
 }
 
+let momentumResetTimer: number | null = null
+
+function scheduleMomentumReset(readMomentum: () => CampfireStore['momentum'], reset: () => void) {
+  if (momentumResetTimer !== null) window.clearTimeout(momentumResetTimer)
+  momentumResetTimer = window.setTimeout(() => {
+    if (readMomentum() === 'typing') reset()
+    momentumResetTimer = null
+  }, 1800)
+}
+
 interface CampfireStore {
   activePage: string
   isAuthenticated: boolean
@@ -88,6 +98,7 @@ interface CampfireStore {
   soundscapePlaying: boolean
   stokePulse: boolean
   portalDrops: PortalDrop[]
+  portalToastActionId: string | null
   sparkBalance: number
   sparkContract: SparkContract | null
   shopItems: ShopItem[]
@@ -266,6 +277,7 @@ export function solve(input: number[]) {
   soundscapePlaying: false,
   stokePulse: false,
   portalDrops: [],
+  portalToastActionId: null,
   sparkBalance: 150,
   sparkContract: null,
   shopItems: [
@@ -324,7 +336,7 @@ export function solve(input: number[]) {
       toastMessage: `Restored ${item.title} in Workplace`,
     }))
   },
-  clearToast: () => set({ toastMessage: null }),
+  clearToast: () => set({ toastMessage: null, portalToastActionId: null }),
   setDisplayName: (name) => {
     set({ displayName: name })
     useCampfireStore.getState().showToast('Settings saved')
@@ -392,7 +404,7 @@ export function solve(input: number[]) {
     useCampfireStore.getState().showToast('Settings saved')
   },
   showToast: (message) => {
-    set({ toastMessage: message })
+    set({ toastMessage: message, portalToastActionId: null })
     setTimeout(() => {
       if (useCampfireStore.getState().toastMessage === message) {
         set({ toastMessage: null })
@@ -459,6 +471,14 @@ export function solve(input: number[]) {
         warning: state.burnTimer.mode === 'deadman' && Date.now() - state.burnTimer.lastActivityAt > 60_000,
         running: remaining > 0,
       },
+      ...(remaining === 0 && state.sparkContract?.status === 'active'
+        ? {
+            sparkBalance: state.sparkBalance + state.sparkContract.reward,
+            sparkContract: { ...state.sparkContract, status: 'verified' as const },
+            momentum: 'success' as const,
+            toastMessage: `Timer complete — Spark Contract verified · +${state.sparkContract.reward}`,
+          }
+        : {}),
     }
   }),
   registerActivity: () => set((state) => ({
@@ -476,13 +496,19 @@ export function solve(input: number[]) {
     }))
     window.setTimeout(() => set({ stokePulse: false }), 700)
   },
-  updateIdeCode: (ideCode) => set((state) => ({
-    ideCode,
-    momentum: 'typing',
-    editedCodeFiles: state.editedCodeFiles.includes(state.ideFileName)
-      ? state.editedCodeFiles
-      : [...state.editedCodeFiles, state.ideFileName],
-  })),
+  updateIdeCode: (ideCode) => {
+    set((state) => ({
+      ideCode,
+      momentum: 'typing',
+      editedCodeFiles: state.editedCodeFiles.includes(state.ideFileName)
+        ? state.editedCodeFiles
+        : [...state.editedCodeFiles, state.ideFileName],
+    }))
+    scheduleMomentumReset(
+      () => useCampfireStore.getState().momentum,
+      () => set({ momentum: 'idle' }),
+    )
+  },
   pipeToIde: (content, fileName = 'chat-snippet.ts') => {
     set((state) => ({
       ideCode: content,
@@ -500,7 +526,13 @@ export function solve(input: number[]) {
     pendingWorkplaceTool: 'study',
     activeSessionType: 'study-group',
   }),
-  setWhiteboardText: (whiteboardText) => set({ whiteboardText, momentum: 'typing' }),
+  setWhiteboardText: (whiteboardText) => {
+    set({ whiteboardText, momentum: 'typing' })
+    scheduleMomentumReset(
+      () => useCampfireStore.getState().momentum,
+      () => set({ momentum: 'idle' }),
+    )
+  },
   solveDoubt: (content) => {
     set((state) => ({
       solvedDoubts: [...state.solvedDoubts, content],
@@ -510,6 +542,7 @@ export function solve(input: number[]) {
         ? {
             sparkBalance: state.sparkBalance + state.sparkContract.reward,
             sparkContract: { ...state.sparkContract, status: 'verified' as const },
+            toastMessage: `Doubt solved — Spark Contract verified · +${state.sparkContract.reward}`,
           }
         : {}),
     }))
@@ -518,7 +551,13 @@ export function solve(input: number[]) {
     }, 1400)
     useCampfireStore.getState().stokeFuel()
   },
-  setNoteContent: (noteContent) => set({ noteContent, momentum: 'typing' }),
+  setNoteContent: (noteContent) => {
+    set({ noteContent, momentum: 'typing' })
+    scheduleMomentumReset(
+      () => useCampfireStore.getState().momentum,
+      () => set({ momentum: 'idle' }),
+    )
+  },
   setBlueprintMode: (blueprintMode) => set({ blueprintMode }),
   setPendingWorkplaceTool: (pendingWorkplaceTool) => set({ pendingWorkplaceTool }),
   saveWorkspaceSnapshot: (name) => {
@@ -562,7 +601,12 @@ export function solve(input: number[]) {
   },
   dispatchAgent: async (kind) => {
     const current = useCampfireStore.getState()
-    const context = [current.noteContent, current.whiteboardText, current.ideCode].filter(Boolean).join('\n\n')
+    const presetContext = current.activeAgentPreset === 'agent-study-pro'
+      ? 'Use the Study Coach style: prioritize concise explanations and active recall.'
+      : current.activeAgentPreset === 'agent-code-review'
+        ? 'Use the Code Clarity style: prioritize concrete, concise review suggestions.'
+        : ''
+    const context = [presetContext, current.noteContent, current.whiteboardText, current.ideCode].filter(Boolean).join('\n\n')
     const titles: Record<AgentKind, string> = {
       study: 'Study & Flashcard Agent',
       'code-audit': 'Code Audit & Test Agent',
@@ -647,14 +691,23 @@ ${state.whiteboardText || 'No whiteboard notes recorded.'}`
       createdAt: new Date().toLocaleTimeString(),
       inserted: false,
     }
-    set((state) => ({ portalDrops: [drop, ...state.portalDrops].slice(0, 30) }))
-    useCampfireStore.getState().showToast('🌀 Added to your Campfire Portal')
+    set((state) => ({
+      portalDrops: [drop, ...state.portalDrops].slice(0, 30),
+      portalToastActionId: drop.id,
+      toastMessage: '🌀 Added to your Campfire Portal',
+    }))
+    window.setTimeout(() => {
+      if (useCampfireStore.getState().portalToastActionId === drop.id) {
+        set({ portalToastActionId: null, toastMessage: null })
+      }
+    }, 3500)
   },
   insertPortalDrop: (id, target) => {
     const drop = useCampfireStore.getState().portalDrops.find((item) => item.id === id)
     if (!drop) return
     set((state) => ({
       portalDrops: state.portalDrops.map((item) => item.id === id ? { ...item, inserted: true } : item),
+      portalToastActionId: null,
       ...(target === 'ide'
         ? {
             ideCode: `// Portal drop · ${drop.source}\n${drop.content}`,
@@ -687,7 +740,15 @@ ${state.whiteboardText || 'No whiteboard notes recorded.'}`
     set((current) => ({
       sparkBalance: current.sparkBalance - 25,
       sparkContract: { goal: cleanGoal, status: 'active', startedAt: Date.now(), stake: 25, reward: 50 },
-      burnTimer: { ...current.burnTimer, running: true, lastActivityAt: Date.now(), phase: 'focus' },
+      burnTimer: {
+        ...current.burnTimer,
+        running: true,
+        lastActivityAt: Date.now(),
+        phase: 'focus',
+        secondsRemaining: current.burnTimer.secondsRemaining > 0
+          ? current.burnTimer.secondsRemaining
+          : current.burnTimer.mode === 'pomodoro' ? current.burnTimer.focusMinutes * 60 : 25 * 60,
+      },
       toastMessage: 'Spark Contract started · 25 Sparks staked',
     }))
     return true
@@ -725,7 +786,11 @@ ${state.whiteboardText || 'No whiteboard notes recorded.'}`
       const item = state.shopItems.find((candidate) => candidate.id === id)
       if (!item?.owned) return state
       if (item.kind === 'theme') return { activeGlassTheme: item.id, toastMessage: `${item.name} applied` }
-      if (item.kind === 'soundscape') return { activeSoundscapePack: item.id, toastMessage: `${item.name} applied` }
+      if (item.kind === 'soundscape') return {
+        activeSoundscapePack: item.id,
+        soundscapePreset: item.id === 'sound-rain-plus' ? 'rain' : 'campfire',
+        toastMessage: `${item.name} applied`,
+      }
       return { activeAgentPreset: item.id, toastMessage: `${item.name} applied` }
     })
   },

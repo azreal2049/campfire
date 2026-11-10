@@ -1,9 +1,12 @@
+import { useEffect, useState } from 'react'
 import { useCampfireStore } from '../store/useCampfireStore'
 import { Folder, Search, ArrowUpRight, Download } from 'lucide-react'
+import type { VaultItem, WorkspaceRevision } from '../bridge/rustBridge'
 
 export function PageVault() {
   const vaultItems = useCampfireStore((state) => state.vaultItems)
   const restoreVaultItem = useCampfireStore((state) => state.restoreVaultItem)
+  const workspaceRevisions = useCampfireStore((state) => state.workspaceRevisions)
 
   const downloadItem = (title: string, fileName: string, format: string, content: string) => {
     const blob = new Blob([content], { type: format === 'json' ? 'application/json' : 'text/plain;charset=utf-8' })
@@ -55,6 +58,7 @@ export function PageVault() {
                   {item.snippet}
                 </p>
               )}
+              <VaultTimelapse item={item} revisions={workspaceRevisions} />
               <div className="mt-4 flex items-center justify-between pt-2 border-t border-white/[0.06]">
                 <button type="button" onClick={() => restoreVaultItem(item.id)} className="flex items-center gap-1.5 text-xs font-medium text-orange-400 hover:text-orange-300">
                   <span>↗ Restore in Workplace</span>
@@ -73,6 +77,46 @@ export function PageVault() {
           ))}
         </div>
       </div>
+    </div>
+  )
+}
+
+function VaultTimelapse({ item, revisions }: { item: VaultItem; revisions: WorkspaceRevision[] }) {
+  const isCode = /code|project/i.test(item.category) || /\.(ts|tsx|js|py|rs|go|c|cpp)$/i.test(item.fileName)
+  const kind = isCode ? 'code' : /study|note|mindmap|doubt/i.test(item.category) ? 'note' : null
+  const frames = revisions.filter((revision) =>
+    kind !== null &&
+    revision.kind === kind &&
+    (!isCode || !revision.fileName || revision.fileName === item.fileName),
+  )
+  const timeline = frames.length > 0
+    ? [{ ...frames[0], id: `${frames[0].id}-blank`, content: '' }, ...frames]
+    : []
+  const [frameIndex, setFrameIndex] = useState(0)
+  const [playing, setPlaying] = useState(false)
+
+  useEffect(() => {
+    if (!playing || timeline.length < 2) return
+    const timer = window.setInterval(() => {
+      setFrameIndex((index) => {
+        return index >= timeline.length - 1 ? 0 : index + 1
+      })
+    }, 850)
+    return () => window.clearInterval(timer)
+  }, [playing, timeline.length])
+
+  if (!kind || timeline.length === 0) return null
+  const frame = timeline[Math.min(frameIndex, timeline.length - 1)]
+  return (
+    <div className="mt-3 border border-white/[0.08] bg-black/30 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <button type="button" onClick={() => { setFrameIndex(0); setPlaying((current) => !current) }} className="text-[11px] text-zinc-300 hover:text-white">
+          {playing ? 'Ⅱ Pause Timelapse' : '▶ Play Session Timelapse'}
+        </button>
+        <span className="text-[9px] text-zinc-600">{frameIndex + 1} / {timeline.length}</span>
+      </div>
+      <input type="range" min={0} max={timeline.length - 1} value={frameIndex} aria-label={`Scrub ${item.title} session timelapse`} onChange={(event) => { setPlaying(false); setFrameIndex(Number(event.target.value)) }} className="mt-2 w-full accent-zinc-200" />
+      <pre className="mt-2 max-h-24 overflow-auto whitespace-pre-wrap break-words text-[9px] leading-relaxed text-zinc-500">{frame.content}</pre>
     </div>
   )
 }

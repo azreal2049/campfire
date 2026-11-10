@@ -101,6 +101,63 @@ export interface AgentRequest {
   context: string
 }
 
+export interface DuelScore {
+  speed: number
+  clarity: number
+  accuracy: number
+  source: 'local-model' | 'local-rubric'
+}
+
+function rubricScore(solution: string): Omit<DuelScore, 'source'> {
+  const text = solution.trim()
+  const lines = text.split(/\r?\n/).filter(Boolean)
+  const words = text.split(/\s+/).filter(Boolean)
+  return {
+    speed: Math.max(15, Math.min(100, 100 - Math.floor(words.length / 8))),
+    clarity: Math.max(10, Math.min(100, 35 + lines.length * 8 + (text.includes('function') || text.includes('Step') ? 20 : 0))),
+    accuracy: Math.max(10, Math.min(100, 30 + (text.length > 40 ? 25 : 0) + (/\b(return|therefore|because|result)\b/i.test(text) ? 25 : 0))),
+  }
+}
+
+export async function scoreDuelSubmissions(challenge: string, yours: string, opponent: string): Promise<DuelScore> {
+  const fallback = rubricScore(yours)
+  const fallbackResult: DuelScore = { ...fallback, source: 'local-rubric' }
+  try {
+    const response = await fetch('http://127.0.0.1:31415/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(1800),
+      body: JSON.stringify({
+        model: 'local',
+        messages: [{
+          role: 'user',
+          content: `Score these two submissions for a short collaborative sprint. Return only JSON with numeric speed, clarity, accuracy scores from 0 to 100 for "yours". Do not execute code. Challenge: ${challenge}\nYours: ${yours.slice(0, 3000)}\nOpponent: ${opponent.slice(0, 3000)}`,
+        }],
+        temperature: 0.1,
+      }),
+    })
+    if (!response.ok) return fallbackResult
+    const data: unknown = await response.json()
+    if (typeof data !== 'object' || data === null || !('choices' in data) || !Array.isArray(data.choices)) return fallbackResult
+    const content = data.choices[0]?.message?.content
+    if (typeof content !== 'string') return fallbackResult
+    const match = content.match(/\{[\s\S]*\}/)
+    if (!match) return fallbackResult
+    const parsed: unknown = JSON.parse(match[0])
+    if (typeof parsed !== 'object' || parsed === null) return fallbackResult
+    const values = ['speed', 'clarity', 'accuracy'].map((key) => (parsed as Record<string, unknown>)[key])
+    if (!values.every((value) => typeof value === 'number' && Number.isFinite(value))) return fallbackResult
+    return {
+      speed: Math.max(0, Math.min(100, values[0] as number)),
+      clarity: Math.max(0, Math.min(100, values[1] as number)),
+      accuracy: Math.max(0, Math.min(100, values[2] as number)),
+      source: 'local-model',
+    }
+  } catch {
+    return fallbackResult
+  }
+}
+
 const FALLBACK_OUTPUTS: Record<AgentKind, (context: string) => string> = {
   study: (context) => {
     const topic = context.trim() || 'Current Campfire topic'
