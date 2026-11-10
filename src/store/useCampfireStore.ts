@@ -6,6 +6,7 @@ interface CampfireStore {
   workspaceView: 'chat' | 'workplace'
   setActivePage: (page: string) => void
   setActiveWorkspaceView: (view: 'chat' | 'workplace') => void
+  openLitAFire: () => void
 }
 
 export const useCampfireStore = create<CampfireStore>((set) => ({
@@ -14,4 +15,7 @@ export const useCampfireStore = create<CampfireStore>((set) => ({
   workspaceView: 'chat',
   setActivePage: (page) => set({ activePage: page }),
   setActiveWorkspaceView: (view) => set({ workspaceView: view }),
+  openLitAFire: () => {
+    console.log('Lit a fire modal opened')
+  },
 }))

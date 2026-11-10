@@ -1,5 +1,6 @@
-import { useCampfireStore } from './store/useCampfireStore'
+import { AppShell } from './components/AppShell'
 import { DevPageSwitcher } from './components/DevPageSwitcher'
+import { useCampfireStore } from './store/useCampfireStore'
 import { PageHome } from './pages/PageHome'
 import { PageChat } from './pages/PageChat'
 import { PageWorkplace } from './pages/PageWorkplace'
@@ -22,9 +23,9 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#070709] text-white">
+    <AppShell>
       {renderPage()}
       <DevPageSwitcher />
-    </div>
+    </AppShell>
   )
 }
