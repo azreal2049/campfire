@@ -94,7 +94,12 @@ export function WhisperAction() {
     recognition.onend = () => setListening(false)
     setVoiceError('')
     setListening(true)
-    recognition.start()
+    try {
+      recognition.start()
+    } catch (error) {
+      setListening(false)
+      setVoiceError(error instanceof Error ? `Speech recognition failed: ${error.message}` : 'Speech recognition could not start.')
+    }
   }
 
   return (
