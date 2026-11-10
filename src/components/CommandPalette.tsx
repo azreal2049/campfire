@@ -61,6 +61,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const setSessionType = useCampfireStore((state) => state.setSessionType)
   const stokeFuel = useCampfireStore((state) => state.stokeFuel)
   const saveWorkspaceSnapshot = useCampfireStore((state) => state.saveWorkspaceSnapshot)
+  const saveToVault = useCampfireStore((state) => state.saveToVault)
   const toggleFocusSoundscape = useCampfireStore((state) => state.toggleFocusSoundscape)
   const setBlueprintMode = useCampfireStore((state) => state.setBlueprintMode)
   const dispatchAgent = useCampfireStore((state) => state.dispatchAgent)
@@ -101,7 +102,16 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       label: '📸 Save Workspace Snapshot to Vault',
       detail: 'Create a named checkpoint',
       group: 'Quick commands',
-      run: () => saveWorkspaceSnapshot('Quick checkpoint'),
+      run: () => {
+        saveWorkspaceSnapshot('Quick checkpoint')
+        const state = useCampfireStore.getState()
+        saveToVault({
+          title: 'Workspace Snapshot — Quick checkpoint',
+          category: 'Recent Items',
+          snippet: `Mode: ${state.activeSessionType}\nNote: ${state.noteContent}\n\n${state.ideCode}`,
+          format: 'md',
+        })
+      },
     },
     {
       id: 'soundscape',
@@ -117,7 +127,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       group: 'Quick commands',
       run: () => setBlueprintMode(!useCampfireStore.getState().blueprintMode),
     },
-  ], [dispatchAgent, saveWorkspaceSnapshot, setActivePage, setBlueprintMode, setSessionType, stokeFuel, toggleFocusSoundscape])
+  ], [dispatchAgent, saveToVault, saveWorkspaceSnapshot, setActivePage, setBlueprintMode, setSessionType, stokeFuel, toggleFocusSoundscape])
 
   const filtered = commands.filter((command) =>
     fuzzyMatch(query, `${command.label} ${command.group} ${command.detail}`),

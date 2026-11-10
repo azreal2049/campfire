@@ -120,6 +120,7 @@ export function PageWorkplace() {
   const setWhiteboardText = useCampfireStore((state) => state.setWhiteboardText)
   const solveDoubt = useCampfireStore((state) => state.solveDoubt)
   const setAssistantOpen = useCampfireStore((state) => state.setAssistantOpen)
+  const syncSquadView = useCampfireStore((state) => state.syncSquadView)
   const activePage = useCampfireStore((state) => state.activePage)
   const stokePulse = useCampfireStore((state) => state.stokePulse)
 
@@ -261,7 +262,10 @@ export function PageWorkplace() {
           </button>
           <button
             type="button"
-            onClick={() => saveWorkspaceSnapshot(window.prompt('Name this workspace snapshot') ?? '')}
+            onClick={() => {
+              const name = window.prompt('Name this workspace snapshot')
+              if (name !== null) saveWorkspaceSnapshot(name)
+            }}
             className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-white/[0.08]"
           >
             🕒 Snapshots · Save
@@ -370,6 +374,7 @@ export function PageWorkplace() {
                     whiteboardText,
                     setWhiteboardText,
                     solveDoubt,
+                    syncSquadView,
                     setFullDevRigOpen,
                     setFullStudyPodOpen,
                     formatTime,
@@ -473,6 +478,7 @@ export function PageWorkplace() {
                     whiteboardText,
                     setWhiteboardText,
                     solveDoubt,
+                    syncSquadView,
                     setFullDevRigOpen,
                     setFullStudyPodOpen,
                     formatTime,
@@ -1209,16 +1215,26 @@ function renderWidgetContent(
     case 'radar-weather':
       return (
         <div className="h-full p-5 flex flex-col justify-between">
-          <div>
+          <div className="min-h-0">
             <span className="text-[10px] font-mono uppercase tracking-widest text-sky-400">
-              Campfire Radar
+              Live Squad Activity
             </span>
-            <h3 className="mt-1 text-base font-bold">Bodega Bay, CA</h3>
-            <p className="text-xs text-zinc-500">58° Clear · Fog rolling in</p>
+            <div className="mt-3 space-y-2">
+              {[
+                { name: 'Nova', activity: 'Coding in IDE · main.rs' },
+                { name: 'Kai', activity: 'Solving doubt on Whiteboard' },
+                { name: 'Rhea', activity: 'Silent Pomodoro · 14:20' },
+              ].map((member) => (
+                <div key={member.name} className="flex items-center justify-between gap-2 text-[10px]">
+                  <span className="min-w-0 truncate text-zinc-400"><span className="mr-1 text-emerald-400">●</span>{member.name} · {member.activity}</span>
+                  <button type="button" onClick={() => props.syncSquadView(member.name)} className="shrink-0 text-sky-300 hover:text-white">Sync</button>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="flex items-center justify-between pt-3 border-t border-white/10 text-xs font-mono text-zinc-400">
-            <span>Squad Ambient: 4 co-working</span>
+            <span>Squad presence</span>
             <span className="text-emerald-400">Synced</span>
           </div>
         </div>

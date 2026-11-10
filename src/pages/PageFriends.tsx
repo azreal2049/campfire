@@ -2,13 +2,14 @@ import { MessageSquare, UserRound } from 'lucide-react'
 import { useCampfireStore } from '../store/useCampfireStore'
 
 const collaborators = [
-  { name: 'Nova', context: 'Asked for an algorithm review' },
-  { name: 'Kai', context: 'Shared a solution in general chat' },
-  { name: 'Rhea', context: 'Working in the study room' },
+  { name: 'Nova', context: 'Coding in IDE · main.rs', mode: 'coders-developers', tool: 'ide' },
+  { name: 'Kai', context: 'Solving doubt on Whiteboard', mode: 'study-group', tool: 'study' },
+  { name: 'Rhea', context: 'Silent Pomodoro · 14:20', mode: 'silent-coworking', tool: 'timer' },
 ]
 
 export function PageFriends() {
   const setActivePage = useCampfireStore((state) => state.setActivePage)
+  const syncSquadView = useCampfireStore((state) => state.syncSquadView)
 
   return (
     <div className="min-h-[calc(100vh-48px)] px-6 py-12 text-white md:px-10">
@@ -30,17 +31,29 @@ export function PageFriends() {
                 </span>
                 <div className="min-w-0">
                   <p className="text-[13px] font-medium">{person.name}</p>
-                  <p className="truncate text-[12px] text-zinc-500">{person.context}</p>
+                  <p className="truncate text-[12px] text-zinc-500">
+                    <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                    {person.context}
+                  </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setActivePage('page-chat')}
-                className="flex shrink-0 items-center gap-1.5 border border-white/[0.12] px-3 py-1.5 text-[12px] text-zinc-300 transition-colors hover:bg-white/[0.05] hover:text-white"
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-                Message
-              </button>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => syncSquadView(person.name)}
+                  className="border border-white/[0.12] px-3 py-1.5 text-[11px] text-zinc-300 transition-colors hover:bg-white/[0.05] hover:text-white"
+                >
+                  👁️ Sync View
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActivePage('page-chat')}
+                  aria-label={`Message ${person.name}`}
+                  className="flex h-8 w-8 items-center justify-center border border-white/[0.12] text-zinc-400 hover:bg-white/[0.05] hover:text-white"
+                >
+                  <MessageSquare className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
           ))}
         </div>

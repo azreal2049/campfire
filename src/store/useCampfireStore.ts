@@ -143,6 +143,9 @@ export const useCampfireStore = create<CampfireStore>()(persist((set) => ({
       title: 'Sliding Window Deque O(n) Solution',
       category: 'Code & Dev',
       snippet: 'def max_sliding_window(nums, k): ...',
+      content: 'def max_sliding_window(nums, k): ...',
+      fileName: 'sliding-window.py',
+      format: 'py',
       date: 'Today at 10:45 AM',
     },
     {
@@ -150,6 +153,9 @@ export const useCampfireStore = create<CampfireStore>()(persist((set) => ({
       title: 'SN1/SN2 Reaction Energy Diagram Notes',
       category: 'Study Notes',
       snippet: 'Two-step carbocation intermediate vs one-step backside attack.',
+      content: 'Two-step carbocation intermediate vs one-step backside attack.',
+      fileName: 'sn1-sn2-notes.md',
+      format: 'md',
       date: 'Yesterday at 4:12 PM',
     },
   ],
@@ -414,7 +420,7 @@ export function solve(input: number[]) {
         secondsRemaining: remaining,
         elapsedSeconds: state.burnTimer.elapsedSeconds + 1,
         warning: state.burnTimer.mode === 'deadman' && Date.now() - state.burnTimer.lastActivityAt > 60_000,
-        running: remaining > 0 || state.burnTimer.mode === 'deadman',
+        running: remaining > 0,
       },
     }
   }),
@@ -519,26 +525,23 @@ export function solve(input: number[]) {
       kind,
       title: titles[kind],
       prompt: context.slice(0, 4000),
-      output: '',
-      status: 'running',
+      output: generateLocalAgentOutput({ kind, context }),
+      status: 'complete',
       createdAt: new Date().toLocaleTimeString(),
       read: false,
     }
-    set((state) => ({ agentTasks: [task, ...state.agentTasks] }))
-    try {
-      const output = await runLocalAgent({ kind, context })
-      set((state) => ({
-        agentTasks: state.agentTasks.map((item) => item.id === task.id ? { ...item, output, status: 'complete' } : item),
-      }))
-    } catch (error) {
-      const output = generateLocalAgentOutput({ kind, context })
-      set((state) => ({
-        agentTasks: state.agentTasks.map((item) => item.id === task.id ? { ...item, output, status: 'complete' } : item),
-        toastMessage: error instanceof Error ? `Local agent unavailable; used offline generator` : 'Local agent unavailable; used offline generator',
-      }))
-    }
-    useCampfireStore.getState().setActivePage('page-workplace')
+    set((state) => ({
+      agentTasks: [task, ...state.agentTasks],
+      activePage: 'page-workplace',
+      workspaceView: 'workplace',
+      pendingWorkplaceTool: kind === 'study' ? 'study' : kind === 'code-audit' ? 'ide' : null,
+    }))
     useCampfireStore.getState().setAssistantOpen(false)
+    void runLocalAgent({ kind, context }).then((output) => {
+      set((state) => ({
+        agentTasks: state.agentTasks.map((item) => item.id === task.id ? { ...item, output } : item),
+      }))
+    })
   },
   markAgentRead: (id) => set((state) => ({
     agentTasks: state.agentTasks.map((task) => task.id === id ? { ...task, read: true } : task),
