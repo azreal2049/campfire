@@ -735,7 +735,7 @@ export function PageWorkplace() {
                   />
                   <div className="flex items-center justify-between border-t border-white/10 pt-3 mt-2">
                     <span className="text-zinc-500">Local editor · UTF-8 · edits persist</span>
-                    <button onClick={props.runCode} className="rounded bg-emerald-500 px-4 py-1.5 font-bold text-black hover:bg-emerald-400 transition">
+                    <button onClick={runCode} className="rounded bg-emerald-500 px-4 py-1.5 font-bold text-black hover:bg-emerald-400 transition">
                       ▶ Run Code
                     </button>
                   </div>
@@ -762,12 +762,12 @@ export function PageWorkplace() {
                         <span className="text-[11px] font-medium text-zinc-300">Browser-to-Canvas Clipper</span>
                         <button type="button" onClick={() => setBrowserClip(window.getSelection()?.toString() ?? '')} className="text-[9px] text-cyan-200 hover:text-white">⚡ Snap Selection</button>
                       </div>
-                      <input value={props.browserSource} onChange={(event) => props.setBrowserSource(event.target.value)} aria-label="Browser source URL" className="h-7 w-full border border-white/[0.08] bg-black/30 px-2 text-[10px] text-zinc-400 outline-none focus:border-white/20" />
-                      <textarea value={props.browserClip} onChange={(event) => props.setBrowserClip(event.target.value)} aria-label="Selected browser text" placeholder="Highlighted text, formula, or code…" className="h-14 w-full resize-none border border-white/[0.08] bg-black/30 p-2 text-[10px] text-zinc-300 outline-none placeholder:text-zinc-600 focus:border-white/20" />
+                      <input value={browserSource} onChange={(event) => setBrowserSource(event.target.value)} aria-label="Browser source URL" className="h-7 w-full border border-white/[0.08] bg-black/30 px-2 text-[10px] text-zinc-400 outline-none focus:border-white/20" />
+                      <textarea value={browserClip} onChange={(event) => setBrowserClip(event.target.value)} aria-label="Selected browser text" placeholder="Highlighted text, formula, or code…" className="h-14 w-full resize-none border border-white/[0.08] bg-black/30 p-2 text-[10px] text-zinc-300 outline-none placeholder:text-zinc-600 focus:border-white/20" />
                       <div className="grid grid-cols-3 gap-1.5">
-                        <button type="button" disabled={!props.browserClip.trim()} onClick={() => { props.setWhiteboardText(`${useCampfireStore.getState().whiteboardText}\n\n${props.browserClip}\n\nSource: ${props.browserSource}`.trim()); props.setBrowserClip('') }} className="border border-white/10 py-1.5 text-[9px] text-zinc-300 hover:bg-white/[0.05] disabled:opacity-40">To Whiteboard</button>
-                        <button type="button" disabled={!props.browserClip.trim()} onClick={() => { props.pipeToIde(`// Source: ${props.browserSource}\n${props.browserClip}`, 'browser-reference.txt'); props.setBrowserClip('') }} className="border border-white/10 py-1.5 text-[9px] text-zinc-300 hover:bg-white/[0.05] disabled:opacity-40">To IDE</button>
-                        <button type="button" disabled={!props.browserClip.trim()} onClick={() => props.addPortalDrop('reference', props.browserClip, props.browserSource)} className="border border-white/10 py-1.5 text-[9px] text-zinc-300 hover:bg-white/[0.05] disabled:opacity-40">To Portal</button>
+                        <button type="button" disabled={!browserClip.trim()} onClick={() => { setWhiteboardText(`${useCampfireStore.getState().whiteboardText}\n\n${browserClip}\n\nSource: ${browserSource}`.trim()); setBrowserClip('') }} className="border border-white/10 py-1.5 text-[9px] text-zinc-300 hover:bg-white/[0.05] disabled:opacity-40">To Whiteboard</button>
+                        <button type="button" disabled={!browserClip.trim()} onClick={() => { pipeToIde(`// Source: ${browserSource}\n${browserClip}`, 'browser-reference.txt'); setBrowserClip('') }} className="border border-white/10 py-1.5 text-[9px] text-zinc-300 hover:bg-white/[0.05] disabled:opacity-40">To IDE</button>
+                        <button type="button" disabled={!browserClip.trim()} onClick={() => addPortalDrop('reference', browserClip, browserSource)} className="border border-white/10 py-1.5 text-[9px] text-zinc-300 hover:bg-white/[0.05] disabled:opacity-40">To Portal</button>
                       </div>
                     </div>
                   </div>
@@ -778,7 +778,7 @@ export function PageWorkplace() {
                       <span>TERMINAL · LIMITED OFFLINE RUNNER</span>
                       <span className="text-sky-400">UI Design Canvas: ON</span>
                     </div>
-                    <pre aria-live="polite" className="max-h-12 overflow-auto whitespace-pre-wrap text-[10px] text-emerald-300">{props.codeRunOutput || 'Supports literal print(...) and arithmetic expressions only.'}</pre>
+                    <pre aria-live="polite" className="max-h-12 overflow-auto whitespace-pre-wrap text-[10px] text-emerald-300">{codeRunOutput || 'Supports literal print(...) and arithmetic expressions only.'}</pre>
                     <div className="flex items-center gap-2 text-emerald-400 mt-1">
                       <span>&gt;</span>
                       <input

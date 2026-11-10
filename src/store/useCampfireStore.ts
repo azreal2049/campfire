@@ -533,6 +533,10 @@ export function solve(input: number[]) {
     )
   },
   solveDoubt: (content) => {
+    if (!content.trim()) {
+      useCampfireStore.getState().showToast('Enter a question before solving it')
+      return
+    }
     set((state) => ({
       solvedDoubts: [...state.solvedDoubts, content],
       whiteboardText: `${state.whiteboardText}\n\nSolved doubt: ${content}`.trim(),
