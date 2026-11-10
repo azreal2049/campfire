@@ -11,10 +11,10 @@ export function PageHome() {
         {/* ── Center Greeting Box ── */}
         <div className="rounded-2xl border border-white/[0.07] bg-[#0B0B0E] p-10 text-center">
           <p className="text-xs font-mono uppercase tracking-widest text-zinc-500">
-          &quot;GREETING&quot;
+            &quot;GREETING&quot;
           </p>
           <h1 className="mt-2 text-3xl font-bold text-white">
-          ~ {displayName} ~
+            ~ {displayName} ~
           </h1>
 
           {/* ── Right Stacked Action Bars ── */}
