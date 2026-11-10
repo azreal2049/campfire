@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ArrowUp,
   Command,
@@ -67,6 +67,11 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const dispatchAgent = useCampfireStore((state) => state.dispatchAgent)
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const closePalette = useCallback(() => {
+    setQuery('')
+    setSelectedIndex(0)
+    onClose()
+  }, [onClose])
 
   const commands = useMemo<PaletteCommand[]>(() => [
     ...navigation.map((item) => ({
@@ -134,13 +139,9 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   )
 
   useEffect(() => {
-    setSelectedIndex(0)
-  }, [query])
-
-  useEffect(() => {
     if (!open) return
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') closePalette()
       if (event.key === 'ArrowDown') {
         event.preventDefault()
         setSelectedIndex((index) => Math.min(index + 1, filtered.length - 1))
@@ -151,16 +152,12 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       }
       if (event.key === 'Enter' && filtered[selectedIndex]) {
         filtered[selectedIndex].run()
-        onClose()
+        closePalette()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [filtered, onClose, open, selectedIndex])
-
-  useEffect(() => {
-    if (open) setQuery('')
-  }, [open])
+  }, [closePalette, filtered, open, selectedIndex])
 
   if (!open) return null
 
@@ -168,7 +165,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
     <div
       className="fixed inset-0 z-[100] flex items-start justify-center bg-black/65 px-4 pt-[18vh] backdrop-blur-sm"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose()
+        if (event.target === event.currentTarget) closePalette()
       }}
     >
       <section role="dialog" aria-modal="true" aria-label="Command palette" className="w-full max-w-xl overflow-hidden rounded-xl border border-white/[0.12] bg-[#111113] shadow-[0_24px_80px_rgba(0,0,0,0.65)]">
@@ -177,12 +174,15 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
           <input
             autoFocus
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value)
+              setSelectedIndex(0)
+            }}
             placeholder="Search pages, modes, and commands..."
             aria-label="Search commands"
             className="h-12 flex-1 bg-transparent text-[13px] text-white outline-none placeholder:text-zinc-600"
           />
-          <button type="button" onClick={onClose} aria-label="Close command palette" className="rounded border border-white/[0.1] p-1 text-zinc-500 hover:text-white">
+          <button type="button" onClick={closePalette} aria-label="Close command palette" className="rounded border border-white/[0.1] p-1 text-zinc-500 hover:text-white">
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -194,7 +194,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
               onMouseEnter={() => setSelectedIndex(index)}
               onClick={() => {
                 command.run()
-                onClose()
+                closePalette()
               }}
               className={`flex w-full items-center justify-between gap-4 rounded-md px-3 py-2.5 text-left ${index === selectedIndex ? 'bg-white/[0.09] text-white' : 'text-zinc-300 hover:bg-white/[0.05]'}`}
             >

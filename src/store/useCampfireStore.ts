@@ -266,14 +266,9 @@ export function solve(input: number[]) {
       format: item.format ?? 'md',
       date: 'Just now',
     }
-    set((state) => ({
-      vaultItems: [newItem, ...state.vaultItems],
-      toastMessage: `📌 Saved "${item.title}" to Personal Vault!`,
-    }))
+    set((state) => ({ vaultItems: [newItem, ...state.vaultItems] }))
+    useCampfireStore.getState().showToast(`📌 Saved "${item.title}" to Personal Vault!`)
     useCampfireStore.getState().stokeFuel()
-    setTimeout(() => {
-      set({ toastMessage: null })
-    }, 3000)
   },
   restoreVaultItem: (id) => {
     const item = useCampfireStore.getState().vaultItems.find((saved) => saved.id === id)

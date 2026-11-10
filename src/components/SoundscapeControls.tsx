@@ -24,12 +24,12 @@ export function SoundscapeControls() {
       stopSoundscape()
       return
     }
-    void startSoundscape(preset, volume).catch((error: unknown) => {
+    void startSoundscape(preset, useCampfireStore.getState().soundscapeVolume).catch((error: unknown) => {
       setPlaying(false)
       showToast(error instanceof Error ? `Audio unavailable: ${error.message}` : 'Audio unavailable')
     })
     return stopSoundscape
-  }, [playing, preset])
+  }, [playing, preset, setPlaying, showToast])
 
   useEffect(() => {
     setSoundscapeVolume(volume)

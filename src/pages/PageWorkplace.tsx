@@ -120,15 +120,17 @@ export function PageWorkplace() {
   const solveDoubt = useCampfireStore((state) => state.solveDoubt)
   const setAssistantOpen = useCampfireStore((state) => state.setAssistantOpen)
   const syncSquadView = useCampfireStore((state) => state.syncSquadView)
-  const activePage = useCampfireStore((state) => state.activePage)
   const stokePulse = useCampfireStore((state) => state.stokePulse)
 
   // ── States ──
   const [canvasTheme, setCanvasTheme] = useState<'obsidian' | 'daylight'>('obsidian')
-  const [selectedMode, setSelectedMode] = useState<SessionMode>(SESSION_TO_MODE[activeSessionType])
+  const [allWidgetsSelected, setAllWidgetsSelected] = useState(false)
+  const selectedMode = allWidgetsSelected ? 'All Widgets' : SESSION_TO_MODE[activeSessionType]
   const [inspectedIndex, setInspectedIndex] = useState<number>(0)
-  const [fullDevRigOpen, setFullDevRigOpen] = useState(false)
-  const [fullStudyPodOpen, setFullStudyPodOpen] = useState(false)
+  const fullDevRigOpen = pendingWorkplaceTool === 'ide'
+  const fullStudyPodOpen = pendingWorkplaceTool === 'study'
+  const setFullDevRigOpen = (open: boolean) => setPendingWorkplaceTool(open ? 'ide' : null)
+  const setFullStudyPodOpen = (open: boolean) => setPendingWorkplaceTool(open ? 'study' : null)
 
   const timerSeconds = burnTimer.secondsRemaining
   const isTimerRunning = burnTimer.running
@@ -150,17 +152,6 @@ export function PageWorkplace() {
   const visibleWidgets = WIDGET_DEFS.filter(
     (w) => selectedMode === 'All Widgets' || w.mode === selectedMode
   )
-
-  useEffect(() => {
-    setSelectedMode(SESSION_TO_MODE[activeSessionType])
-  }, [activeSessionType])
-
-  useEffect(() => {
-    if (activePage !== 'page-workplace' || !pendingWorkplaceTool) return
-    if (pendingWorkplaceTool === 'ide') setFullDevRigOpen(true)
-    if (pendingWorkplaceTool === 'study') setFullStudyPodOpen(true)
-    setPendingWorkplaceTool(null)
-  }, [activePage, pendingWorkplaceTool, setPendingWorkplaceTool])
 
   // Handle keyboard navigation in Blueprint mode
   useEffect(() => {
@@ -224,7 +215,7 @@ export function PageWorkplace() {
             <button
               key={mode}
               onClick={() => {
-                setSelectedMode(mode)
+                setAllWidgetsSelected(mode === 'All Widgets')
                 const sessionType = MODE_TO_SESSION[mode]
                 if (sessionType) setSessionType(sessionType)
                 setInspectedIndex(0)

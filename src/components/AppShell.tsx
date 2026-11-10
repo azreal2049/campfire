@@ -16,6 +16,7 @@ export function AppShell({ children }: AppShellProps) {
   const setAssistantOpen = useCampfireStore((state) => state.setAssistantOpen)
   const agentTasks = useCampfireStore((state) => state.agentTasks)
   const dispatchAgent = useCampfireStore((state) => state.dispatchAgent)
+  const saveAgentOutput = useCampfireStore((state) => state.saveAgentOutput)
   const tickBurnTimer = useCampfireStore((state) => state.tickBurnTimer)
   const registerActivity = useCampfireStore((state) => state.registerActivity)
   const openLitAFire = useCampfireStore((state) => state.openLitAFire)
@@ -158,7 +159,12 @@ export function AppShell({ children }: AppShellProps) {
                         <p className="text-[12px] font-medium text-zinc-200">{task.title}</p>
                         <span className="text-[10px] text-zinc-600">{task.status}</span>
                       </div>
-                      {task.output && <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap text-[11px] leading-relaxed text-zinc-400">{task.output}</pre>}
+                      {task.output && (
+                        <>
+                          <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap text-[11px] leading-relaxed text-zinc-400">{task.output}</pre>
+                          <button type="button" onClick={() => saveAgentOutput(task.id)} className="mt-2 text-[10px] text-orange-300 hover:text-orange-200">📌 Save Output to Personal Vault</button>
+                        </>
+                      )}
                     </article>
                   ))}
                 </div>
