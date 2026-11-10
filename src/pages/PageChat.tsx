@@ -1,177 +1,299 @@
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { MessageSquare, Sparkles, ChevronRight, Hash, Shield, Zap } from 'lucide-react'
+import { Hash, Plus, Settings, Headphones, Mic, Smile, Send, Paperclip, Search, Bell, Pin, Users, Gift, Image, Sparkles } from 'lucide-react'
 
-interface Room {
+interface Server {
   id: string
   name: string
-  topic: string
-  unreadCount: number
+  icon: string
+  unread: boolean
 }
 
-const DUMMY_ROOMS: Room[] = [
-  { id: '1', name: 'Late Night Python & DSA', topic: 'Grind LeetCode mediums', unreadCount: 3 },
-  { id: '2', name: 'Organic Chem Cram', topic: 'SN1/SN2 mechanisms', unreadCount: 0 },
-  { id: '3', name: 'Lo-Fi Beat Lab', topic: 'Sample flips & DAW share', unreadCount: 5 },
-  { id: '4', name: 'AI Agents & LLMs', topic: 'RAG pipelines & local models', unreadCount: 1 },
+interface Channel {
+  id: string
+  name: string
+  unread: boolean
+}
+
+interface Message {
+  id: string
+  author: string
+  avatar: string
+  content: string
+  timestamp: string
+}
+
+const SERVERS: Server[] = [
+  { id: '1', name: 'Campfire HQ', icon: '🔥', unread: false },
+  { id: '2', name: 'Python & DSA', icon: '🐍', unread: true },
+  { id: '3', name: 'Organic Chem', icon: '🧪', unread: false },
+  { id: '4', name: 'Lo-Fi Lab', icon: '🎧', unread: true },
+]
+
+const CHANNELS: Channel[] = [
+  { id: 'general', name: 'general-chat', unread: false },
+  { id: 'dev-rig', name: 'dev-rig-code', unread: true },
+  { id: 'whiteboard', name: 'whiteboard-notes', unread: false },
+  { id: 'voice-lounge', name: 'voice-lounge', unread: false },
+]
+
+const MESSAGES: Message[] = [
+  {
+    id: '1',
+    author: 'Nova',
+    avatar: 'N',
+    content: 'Hey everyone! Working on the sliding window algorithm. Anyone around to review?',
+    timestamp: 'Today at 10:42 AM',
+  },
+  {
+    id: '2',
+    author: 'Kai',
+    avatar: 'K',
+    content: 'Yeah drop your O(n) deque solution in the dev-rig channel!',
+    timestamp: 'Today at 10:44 AM',
+  },
+  {
+    id: '3',
+    author: 'Rhea',
+    avatar: 'R',
+    content: 'Brown noise is playing in my headphones. Locking in 🔥',
+    timestamp: 'Today at 10:45 AM',
+  },
 ]
 
 export function PageChat() {
-  const [activeRoomId, setActiveRoomId] = useState<string | null>(null)
-  const activeRoom = DUMMY_ROOMS.find((r) => r.id === activeRoomId)
+  const [selectedServer, setSelectedServer] = useState('1')
+  const [selectedChannel, setSelectedChannel] = useState('general')
+  const [messages, setMessages] = useState<Message[]>(MESSAGES)
+  const [inputVal, setInputVal] = useState('')
+
+  const handleSend = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!inputVal.trim()) return
+    setMessages([
+      ...messages,
+      {
+        id: String(Date.now()),
+        author: 'You',
+        avatar: 'Y',
+        content: inputVal.trim(),
+        timestamp: 'Just now',
+      },
+    ])
+    setInputVal('')
+  }
 
   return (
-    <div className="flex h-[calc(100vh-48px)] w-full overflow-hidden">
-      {/* ── Left Column: Room Circles / List ── */}
-      <div className="w-80 border-r border-white/[0.08] bg-[#0a0a0d]/60 p-4 flex flex-col">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-500">
-            Chat Channels / Rooms
-          </h2>
-          <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-mono text-zinc-400">
-            {DUMMY_ROOMS.length}
-          </span>
+    <div className="flex h-[calc(100vh-48px)] w-full bg-[#313338] text-[#dbdee1] overflow-hidden select-none font-sans">
+      {/* ── 1. Server Sidebar (Far Left) ── */}
+      <nav className="flex w-[72px] flex-col items-center py-3 bg-[#1e1f22] shrink-0 gap-2">
+        {/* Direct Messages / Home */}
+        <button className="relative group flex h-12 w-12 items-center justify-center rounded-[24px] hover:rounded-[16px] bg-[#313338] text-white transition-all duration-200">
+          <span className="text-xl">🔥</span>
+          <div className="absolute left-0 w-1 h-5 bg-white rounded-r-full -ml-3 scale-y-0 group-hover:scale-y-100 transition-transform" />
+        </button>
+
+        <div className="w-8 h-[2px] bg-[#35363c] rounded my-1" />
+
+        {/* Server List */}
+        {SERVERS.map((server) => (
+          <button
+            key={server.id}
+            onClick={() => setSelectedServer(server.id)}
+            className={`relative group flex h-12 w-12 items-center justify-center rounded-[24px] hover:rounded-[16px] transition-all duration-200 text-white font-semibold ${
+              selectedServer === server.id
+                ? 'rounded-[16px] bg-[#5865f2]'
+                : 'bg-[#313338] hover:bg-[#5865f2]'
+            }`}
+          >
+            {server.icon}
+            {server.unread && selectedServer !== server.id && (
+              <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-white border-2 border-[#1e1f22]" />
+            )}
+          </button>
+        ))}
+
+        {/* Add Server Button */}
+        <button className="flex h-12 w-12 items-center justify-center rounded-[24px] hover:rounded-[16px] bg-[#313338] text-[#23a55a] hover:bg-[#23a55a] hover:text-white transition-all duration-200">
+          <Plus className="h-5 w-5" />
+        </button>
+      </nav>
+
+      {/* ── 2. Channels Sidebar (Second Left) ── */}
+      <div className="flex w-60 flex-col bg-[#2b2d31] shrink-0">
+        {/* Server Header */}
+        <div className="flex h-12 items-center justify-between px-4 border-b border-[#1f2023] font-semibold text-white shadow-sm cursor-pointer hover:bg-[#35373c] transition">
+          <span className="truncate">Campfire Workspace</span>
+          <span className="text-xs">▼</span>
         </div>
 
-        {/* Top 4 Circular Avatars / Badges as sketched */}
-        <div className="flex items-center justify-between mb-6 px-2">
-          {DUMMY_ROOMS.map((room, i) => (
-            <button
-              key={room.id}
-              onClick={() => setActiveRoomId(room.id)}
-              className={`relative flex h-12 w-12 items-center justify-center rounded-full border transition hover:scale-105 ${
-                activeRoomId === room.id
-                  ? 'border-orange-500 bg-orange-500/20 text-orange-300 shadow-[0_0_15px_rgba(249,115,22,0.3)]'
-                  : 'border-white/10 bg-white/[0.03] text-zinc-400 hover:border-white/20 hover:text-white'
-              }`}
-              title={room.name}
-            >
-              <Hash className="h-5 w-5" />
-              {room.unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[9px] font-bold text-white">
-                  {room.unreadCount}
-                </span>
-              )}
+        {/* Channel Categories & List */}
+        <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
+          <div>
+            <div className="flex items-center justify-between px-2 mb-1 text-[12px] font-bold text-[#949ba4] uppercase tracking-wider hover:text-[#dbdee1] cursor-pointer">
+              <span>▼ Text Channels</span>
+              <Plus className="h-4 w-4" />
+            </div>
+            <div className="space-y-0.5">
+              {CHANNELS.map((ch) => (
+                <button
+                  key={ch.id}
+                  onClick={() => setSelectedChannel(ch.id)}
+                  className={`w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-sm font-medium transition ${
+                    selectedChannel === ch.id
+                      ? 'bg-[#404249] text-white'
+                      : 'text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]'
+                  }`}
+                >
+                  <Hash className="h-4 w-4 text-[#80848e]" />
+                  <span className="truncate">{ch.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* User Profile Bar (Bottom Left) */}
+        <div className="flex h-[52px] items-center justify-between bg-[#232428] px-2">
+          <div className="flex items-center gap-2">
+            <div className="relative h-8 w-8 rounded-full bg-[#5865f2] flex items-center justify-center font-bold text-white text-xs">
+              Y
+              <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-[#23a55a] border-2 border-[#232428]" />
+            </div>
+            <div className="leading-tight">
+              <p className="text-sm font-semibold text-white">You</p>
+              <p className="text-[11px] text-[#949ba4]">#online</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 text-[#b5bac1]">
+            <button className="p-1.5 rounded hover:bg-[#35373c] hover:text-white transition">
+              <Mic className="h-4 w-4" />
             </button>
-          ))}
-        </div>
-
-        {/* Room List below */}
-        <div className="flex-1 space-y-1 overflow-y-auto">
-          {DUMMY_ROOMS.map((room) => (
-            <button
-              key={room.id}
-              onClick={() => setActiveRoomId(room.id)}
-              className={`w-full flex items-center justify-between rounded-xl p-3 text-left transition ${
-                activeRoomId === room.id
-                  ? 'border border-white/20 bg-white/[0.08] text-white'
-                  : 'border border-transparent bg-white/[0.02] text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-200'
-              }`}
-            >
-              <div>
-                <p className="text-xs font-semibold text-white">{room.name}</p>
-                <p className="text-[11px] text-zinc-500 truncate max-w-[190px]">
-                  {room.topic}
-                </p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-zinc-600" />
+            <button className="p-1.5 rounded hover:bg-[#35373c] hover:text-white transition">
+              <Headphones className="h-4 w-4" />
             </button>
-          ))}
-        </div>
-
-        {/* Note on WebGL background */}
-        <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.01] p-3 text-[11px] text-zinc-600 font-mono">
-          💡 Live Interactive Background on WebGL (Later when UI is upgraded)
+            <button className="p-1.5 rounded hover:bg-[#35373c] hover:text-white transition">
+              <Settings className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* ── Right Column: Chat Bubble Area (Pops out when opened, pops back when closed) ── */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-[#070709] relative overflow-hidden">
-        <AnimatePresence mode="wait">
-          {!activeRoom ? (
-            <motion.div
-              key="none"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className="text-center"
-            >
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/[0.02] text-zinc-600 mb-4">
-                <MessageSquare className="h-8 w-8" />
+      {/* ── 3. Main Chat Area ── */}
+      <div className="flex flex-1 flex-col bg-[#313338] min-w-0">
+        {/* Chat Header */}
+        <div className="flex h-12 items-center justify-between border-b border-[#1f2023] px-4 shadow-sm bg-[#313338]">
+          <div className="flex items-center gap-2">
+            <Hash className="h-5 w-5 text-[#80848e]" />
+            <span className="font-semibold text-white">{selectedChannel}</span>
+            <span className="text-xs text-[#949ba4] border-l border-[#404249] pl-3 ml-3 truncate">
+              Welcome to the official Campfire study & dev channel.
+            </span>
+          </div>
+
+          <div className="flex items-center gap-4 text-[#b5bac1]">
+            <button className="hover:text-white transition"><Bell className="h-5 w-5" /></button>
+            <button className="hover:text-white transition"><Pin className="h-5 w-5" /></button>
+            <button className="hover:text-white transition"><Users className="h-5 w-5" /></button>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search"
+                className="h-7 w-36 rounded bg-[#1e1f22] px-2 text-xs text-[#dbdee1] placeholder-[#949ba4] focus:w-60 transition-all focus:outline-none"
+              />
+              <Search className="absolute right-2 top-1.5 h-4 w-4 text-[#949ba4]" />
+            </div>
+          </div>
+        </div>
+
+        {/* Message History */}
+        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+          <div className="border-b border-[#3f4147] pb-4 mb-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#404249] text-3xl mb-3">
+              #
+            </div>
+            <h1 className="text-3xl font-bold text-white">Welcome to #{selectedChannel}!</h1>
+            <p className="text-sm text-[#949ba4] mt-1">This is the start of the #{selectedChannel} channel.</p>
+          </div>
+
+          {messages.map((msg) => (
+            <div key={msg.id} className="flex gap-4 group hover:bg-[#2e3035] -mx-4 px-4 py-1 rounded transition">
+              <div className="h-10 w-10 rounded-full bg-[#5865f2] flex items-center justify-center font-bold text-white shrink-0 mt-0.5">
+                {msg.avatar}
               </div>
-              <h3 className="text-lg font-semibold text-zinc-300">CHAT PAGE (none chat opened)</h3>
-              <p className="mt-1 text-xs text-zinc-600">
-                Click any room circle or list item on the left to open the chat bubble.
-              </p>
-            </motion.div>
-          ) : (
-            <motion.div
-              key={activeRoom.id}
-              initial={{ opacity: 0, scale: 0.85, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.85, y: 20 }}
-              transition={{ type: 'spring', stiffness: 280, damping: 24 }}
-              className="relative w-full max-w-2xl rounded-3xl border border-white/25 bg-[#111115] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl"
-            >
-              {/* Chat Bubble Tail / Header */}
-              <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
-                <div>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-orange-400">
-                    Active Room
+              <div className="flex-1 leading-relaxed">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-semibold text-white hover:underline cursor-pointer">
+                    {msg.author}
                   </span>
-                  <h2 className="text-xl font-bold text-white">{activeRoom.name}</h2>
-                  <p className="text-xs text-zinc-500">{activeRoom.topic}</p>
+                  <span className="text-[11px] text-[#949ba4]">{msg.timestamp}</span>
                 </div>
-                <button
-                  onClick={() => setActiveRoomId(null)}
-                  className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-zinc-400 hover:bg-white/10 hover:text-white transition"
-                >
-                  Close Chat ✕
-                </button>
+                <p className="text-sm text-[#dbdee1]">{msg.content}</p>
               </div>
+            </div>
+          ))}
+        </div>
 
-              {/* Chat Bubble Mock Messages */}
-              <div className="space-y-4 my-6">
-                <div className="flex gap-3">
-                  <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-300">
-                    N
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-black/40 p-4 max-w-md">
-                    <p className="text-xs font-semibold text-zinc-300 mb-1">Nova</p>
-                    <p className="text-sm text-zinc-200">
-                      Stuck on the sliding window variant — anyone free to review?
-                    </p>
-                  </div>
-                </div>
+        {/* Message Input Box */}
+        <div className="p-4 bg-[#313338]">
+          <form onSubmit={handleSend} className="relative flex items-center rounded-lg bg-[#383a40] px-4 py-2.5">
+            <button type="button" className="absolute left-4 flex h-6 w-6 items-center justify-center rounded-full bg-[#4e5058] text-[#dbdee1] hover:bg-white hover:text-[#313338] transition">
+              <Plus className="h-4 w-4" />
+            </button>
+            <input
+              type="text"
+              value={inputVal}
+              onChange={(e) => setInputVal(e.target.value)}
+              placeholder={`Message #${selectedChannel}`}
+              className="w-full bg-transparent pl-10 pr-12 text-sm text-[#dbdee1] placeholder-[#80848e] focus:outline-none"
+            />
+            <div className="absolute right-4 flex items-center gap-3 text-[#b5bac1]">
+              <button type="button" className="hover:text-white transition"><Gift className="h-5 w-5" /></button>
+              <button type="button" className="hover:text-white transition"><Image className="h-5 w-5" /></button>
+              <button type="button" className="hover:text-white transition"><Smile className="h-5 w-5" /></button>
+            </div>
+          </form>
+        </div>
+      </div>
 
-                <div className="flex gap-3 justify-end">
-                  <div className="rounded-2xl border border-orange-500/30 bg-orange-500/10 p-4 max-w-md">
-                    <p className="text-xs font-semibold text-orange-300 mb-1">You</p>
-                    <p className="text-sm text-orange-100">
-                      Dropping my O(n) deque solution into the dev rig now!
-                    </p>
-                  </div>
-                  <div className="h-8 w-8 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-bold text-orange-300">
-                    Y
-                  </div>
-                </div>
-              </div>
+      {/* ── 4. Member List (Far Right) ── */}
+      <div className="flex w-60 flex-col bg-[#2b2d31] p-4 shrink-0 overflow-y-auto">
+        <h3 className="text-xs font-bold text-[#949ba4] uppercase tracking-wider mb-2">
+          Online — 3
+        </h3>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-[#35373c] cursor-pointer transition">
+            <div className="relative h-8 w-8 rounded-full bg-emerald-500 flex items-center justify-center font-bold text-white text-xs">
+              N
+              <div className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-[#23a55a] border-2 border-[#2b2d31]" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-white">Nova</p>
+              <p className="text-[11px] text-[#949ba4]">Grinding LeetCode</p>
+            </div>
+          </div>
 
-              {/* Message Input Footer */}
-              <div className="flex items-center gap-2 pt-2 border-t border-white/10">
-                <input
-                  type="text"
-                  placeholder="Type message..."
-                  className="flex-1 rounded-xl border border-white/10 bg-black/50 px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-white/30"
-                />
-                <button className="rounded-xl border border-white/25 bg-white text-black px-5 py-2.5 text-sm font-semibold hover:bg-zinc-200 transition">
-                  Send
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+          <div className="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-[#35373c] cursor-pointer transition">
+            <div className="relative h-8 w-8 rounded-full bg-sky-500 flex items-center justify-center font-bold text-white text-xs">
+              K
+              <div className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-[#23a55a] border-2 border-[#2b2d31]" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-white">Kai</p>
+              <p className="text-[11px] text-[#949ba4]">Building React 19 app</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-[#35373c] cursor-pointer transition">
+            <div className="relative h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center font-bold text-white text-xs">
+              R
+              <div className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-[#f0b232] border-2 border-[#2b2d31]" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-white">Rhea</p>
+              <p className="text-[11px] text-[#949ba4]">Idle</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
