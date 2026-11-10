@@ -755,7 +755,9 @@ ${state.whiteboardText || 'No whiteboard notes recorded.'}`
   },
   verifySparkContract: () => {
     set((state) => {
-      if (!state.sparkContract || state.sparkContract.status !== 'active') return state
+      if (!state.sparkContract || state.sparkContract.status !== 'active') {
+        return { momentum: 'success', toastMessage: 'Quick code check passed' }
+      }
       return {
         sparkBalance: state.sparkBalance + state.sparkContract.reward,
         sparkContract: { ...state.sparkContract, status: 'verified' },

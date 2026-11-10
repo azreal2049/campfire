@@ -19,6 +19,7 @@ import {
 import { useCampfireStore } from '../store/useCampfireStore'
 import { scoreDuelSubmissions, type AgentKind, type AgentTask, type CampfireSessionType, type DuelScore } from '../bridge/rustBridge'
 import { SoundscapeControls } from '../components/SoundscapeControls'
+import { runOfflineSnippet } from '../utils/offlineCodeRunner'
 
 type SessionMode =
   | 'All Widgets'
@@ -134,6 +135,7 @@ export function PageWorkplace() {
   const recordWorkspaceRevision = useCampfireStore((state) => state.recordWorkspaceRevision)
   const pipeToIde = useCampfireStore((state) => state.pipeToIde)
   const portalToastDrop = portalDrops.find((drop) => drop.id === portalToastActionId)
+  const showToast = useCampfireStore((state) => state.showToast)
 
   // ── States ──
   const [canvasTheme, setCanvasTheme] = useState<'obsidian' | 'daylight'>('obsidian')
@@ -150,6 +152,7 @@ export function PageWorkplace() {
   const [duelScore, setDuelScore] = useState<DuelScore | null>(null)
   const [browserClip, setBrowserClip] = useState('')
   const [browserSource, setBrowserSource] = useState('https://localhost:3000/preview')
+  const [codeRunOutput, setCodeRunOutput] = useState('')
   const lastRevisionRef = useRef({ ideCode, noteContent, whiteboardText })
   const fullDevRigOpen = pendingWorkplaceTool === 'ide'
   const fullStudyPodOpen = pendingWorkplaceTool === 'study'
@@ -179,6 +182,8 @@ export function PageWorkplace() {
   const isDuelEligible = activeSessionType === 'study-group' || activeSessionType === 'coders-developers'
   const cardAura = momentum === 'typing' ? 'border-amber-300/40' : momentum === 'success' ? 'border-emerald-300/50' : 'border-cyan-300/25'
   const glassSurface = activeGlassTheme === 'glass-ember' ? 'bg-[#17110D]' : activeGlassTheme === 'glass-frost' ? 'bg-[#0C1317]' : ''
+  const auraColor = momentum === 'typing' ? 'rgba(252, 211, 77, 0.42)' : momentum === 'success' ? 'rgba(110, 231, 183, 0.52)' : 'rgba(103, 232, 249, 0.28)'
+  const glassColor = activeGlassTheme === 'glass-ember' ? '#17110D' : activeGlassTheme === 'glass-frost' ? '#0C1317' : undefined
 
   useEffect(() => {
     const previous = lastRevisionRef.current
@@ -210,6 +215,19 @@ export function PageWorkplace() {
     void scoreDuelSubmissions('Explain a clear, correct solution to the current session challenge.', duelSolution, opponent)
       .then(setDuelScore)
       .catch(() => setDuelScore(null))
+  }
+
+  const runCode = () => {
+    stokeFuel()
+    try {
+      const output = runOfflineSnippet(ideCode)
+      setCodeRunOutput(`PASS · ${output}`)
+      verifySparkContract()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unsupported snippet'
+      setCodeRunOutput(`Not run · ${message}`)
+      showToast(`Offline runner: ${message}`)
+    }
   }
 
   // Handle keyboard navigation in Blueprint mode
@@ -409,7 +427,7 @@ export function PageWorkplace() {
                     ? (glassSurface || 'bg-[#111115]')
                     : 'border-black/[0.08] bg-white'
                 }`}
-                style={{ minHeight: `${widget.height}px` }}
+                style={{ minHeight: `${widget.height}px`, borderColor: auraColor, ...(glassColor ? { backgroundColor: glassColor } : {}) }}
               >
                 {renderWidgetContent(
                   widget.id,
@@ -454,6 +472,8 @@ export function PageWorkplace() {
                     setBrowserClip,
                     browserSource,
                     setBrowserSource,
+                    runCode,
+                    codeRunOutput,
                     solveDoubt,
                     syncSquadView,
                     portalDrops,
@@ -527,7 +547,7 @@ export function PageWorkplace() {
                     ? (glassSurface || 'bg-[#111115]')
                     : 'border-black/[0.12] bg-white'
                 }`}
-                style={{ minHeight: `${inspectedWidget.height}px` }}
+                style={{ minHeight: `${inspectedWidget.height}px`, borderColor: auraColor, ...(glassColor ? { backgroundColor: glassColor } : {}) }}
               >
                 {renderWidgetContent(
                   inspectedWidget.id,
@@ -572,6 +592,8 @@ export function PageWorkplace() {
                     setBrowserClip,
                     browserSource,
                     setBrowserSource,
+                    runCode,
+                    codeRunOutput,
                     solveDoubt,
                     syncSquadView,
                     portalDrops,
@@ -707,7 +729,7 @@ export function PageWorkplace() {
                   />
                   <div className="flex items-center justify-between border-t border-white/10 pt-3 mt-2">
                     <span className="text-zinc-500">Local editor · UTF-8 · edits persist</span>
-                    <button onClick={stokeFuel} className="rounded bg-emerald-500 px-4 py-1.5 font-bold text-black hover:bg-emerald-400 transition">
+                    <button onClick={props.runCode} className="rounded bg-emerald-500 px-4 py-1.5 font-bold text-black hover:bg-emerald-400 transition">
                       ▶ Run Code
                     </button>
                   </div>
@@ -723,7 +745,7 @@ export function PageWorkplace() {
                       <Sparkles className="h-8 w-8 text-sky-400 mb-2" />
                       <p className="text-sm font-semibold text-white">App Testing Window</p>
                       <p className="text-xs text-zinc-500 mt-1">
-                          Run Code adds timer fuel. Review agent-generated assertions below.
+                          The offline runner supports literal print and arithmetic only. Review agent test ideas below.
                       </p>
                       {agentTasks.filter((task) => task.kind === 'code-audit').map((task) => (
                         <pre key={task.id} className="mt-4 max-h-40 w-full overflow-auto whitespace-pre-wrap rounded border border-white/10 bg-black/40 p-3 text-left text-[10px] text-zinc-300">{task.output || 'Audit running…'}</pre>
@@ -745,11 +767,12 @@ export function PageWorkplace() {
                   </div>
 
                   {/* Command Terminal */}
-                  <div className="h-28 rounded-2xl border border-white/10 bg-black p-3 font-mono text-xs text-zinc-400 flex flex-col justify-between">
+                  <div className="h-36 rounded-2xl border border-white/10 bg-black p-3 font-mono text-xs text-zinc-400 flex flex-col justify-between">
                     <div className="flex items-center justify-between text-[11px] text-zinc-600 border-b border-white/10 pb-1">
-                      <span>TERMINAL & AI UX COMMAND</span>
+                      <span>TERMINAL · LIMITED OFFLINE RUNNER</span>
                       <span className="text-sky-400">UI Design Canvas: ON</span>
                     </div>
+                    <pre aria-live="polite" className="max-h-12 overflow-auto whitespace-pre-wrap text-[10px] text-emerald-300">{props.codeRunOutput || 'Supports literal print(...) and arithmetic expressions only.'}</pre>
                     <div className="flex items-center gap-2 text-emerald-400 mt-1">
                       <span>&gt;</span>
                       <input

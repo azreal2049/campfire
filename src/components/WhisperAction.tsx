@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Mic, Send } from 'lucide-react'
 import { useCampfireStore } from '../store/useCampfireStore'
+import { runOfflineSnippet } from '../utils/offlineCodeRunner'
 
 interface RecognitionResultEvent {
   results: ArrayLike<ArrayLike<{ transcript: string }>>
@@ -32,6 +33,9 @@ export function WhisperAction() {
   const dispatchAgent = useCampfireStore((state) => state.dispatchAgent)
   const setWhiteboardText = useCampfireStore((state) => state.setWhiteboardText)
   const showToast = useCampfireStore((state) => state.showToast)
+  const ideCode = useCampfireStore((state) => state.ideCode)
+  const stokeFuel = useCampfireStore((state) => state.stokeFuel)
+  const verifySparkContract = useCampfireStore((state) => state.verifySparkContract)
 
   const executeCommand = (rawCommand: string) => {
     const text = rawCommand.trim()
@@ -48,7 +52,14 @@ export function WhisperAction() {
     } else if (lower.includes('run code')) {
       setPendingWorkplaceTool('ide')
       setActivePage('page-workplace')
-      showToast('IDE opened — review your code and run it from the editor')
+      stokeFuel()
+      try {
+        const output = runOfflineSnippet(ideCode)
+        verifySparkContract()
+        showToast(`Offline run passed: ${output}`)
+      } catch (error) {
+        showToast(`Offline run not supported: ${error instanceof Error ? error.message : 'check the editor'}`)
+      }
     } else {
       const existing = useCampfireStore.getState().whiteboardText
       setWhiteboardText(`${existing}\n\n${text}`.trim())
