@@ -344,6 +344,8 @@ export function PageWorkplace() {
                     setIsTimerRunning,
                     setTimerSeconds,
                     timerMode: burnTimer.mode,
+                    burnTimer,
+                    timerTotalSeconds: burnTimer.mode === 'pomodoro' ? burnTimer.focusMinutes * 60 : 25 * 60,
                     setTimerMode: setBurnMode,
                     stokeFuel,
                     stokePulse,
@@ -443,6 +445,8 @@ export function PageWorkplace() {
                     setIsTimerRunning,
                     setTimerSeconds,
                     timerMode: burnTimer.mode,
+                    burnTimer,
+                    timerTotalSeconds: burnTimer.mode === 'pomodoro' ? burnTimer.focusMinutes * 60 : 25 * 60,
                     setTimerMode: setBurnMode,
                     stokeFuel,
                     stokePulse,
@@ -802,24 +806,23 @@ function renderWidgetContent(
   theme: 'obsidian' | 'daylight',
   props: any
 ) {
-  const isDark = theme === 'obsidian'
-  const textMuted = isDark ? 'text-zinc-400' : 'text-zinc-600'
-
   switch (id) {
     // 1. Focus Timer
     case 'focus-timer':
       return (
-        <div className="h-full bg-gradient-to-br from-[#111827] via-[#0F172A] to-[#090D16] text-white p-6 flex flex-col justify-between">
+        <div className={`h-full bg-gradient-to-br from-[#111827] via-[#0F172A] to-[#090D16] p-6 text-white ${props.stokePulse ? 'shadow-[inset_0_0_42px_rgba(251,146,60,0.42)]' : ''} ${props.burnTimer.warning ? 'opacity-75' : ''} flex flex-col justify-between`}>
           <div className="flex items-center justify-between text-xs font-medium">
-            <span className="text-zinc-400 uppercase tracking-wider">Focus</span>
-            <button
-              onClick={() =>
-                props.setTimerPhase(props.timerPhase === 'Pomodoro' ? 'Deadman' : 'Pomodoro')
-              }
-              className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] text-amber-300 border border-amber-500/30"
+            <span className="text-zinc-400 uppercase tracking-wider">{props.timerMode} · {props.burnTimer.phase}</span>
+            <select
+              value={props.timerMode}
+              onChange={(event) => props.setTimerMode(event.target.value)}
+              className="rounded-full border border-white/10 bg-[#15171c] px-2 py-1 text-[10px] text-zinc-300"
+              aria-label="Burn timer mode"
             >
-              {props.timerPhase} Mode
-            </button>
+              <option value="pomodoro">Pomodoro 25/5</option>
+              <option value="countdown">Countdown</option>
+              <option value="deadman">Deadman</option>
+            </select>
           </div>
 
           {/* SVG Dial with 60 ticks */}
@@ -831,7 +834,7 @@ function renderWidgetContent(
                 const y1 = 50 + 40 * Math.sin(angle)
                 const x2 = 50 + 45 * Math.cos(angle)
                 const y2 = 50 + 45 * Math.sin(angle)
-                const active = i < Math.floor((props.timerSeconds / 1500) * 60)
+                const active = i < Math.floor((props.timerSeconds / Math.max(1, props.timerTotalSeconds)) * 60)
                 return (
                   <line
                     key={i}
@@ -839,8 +842,8 @@ function renderWidgetContent(
                     y1={y1}
                     x2={x2}
                     y2={y2}
-                    stroke={active ? '#38BDF8' : '#334155'}
-                    strokeWidth="1.5"
+                    stroke={props.burnTimer.warning && active ? '#f97316' : active ? '#38BDF8' : '#334155'}
+                    strokeWidth={props.stokePulse && active ? '2.5' : '1.5'}
                   />
                 )
               })}
@@ -848,12 +851,13 @@ function renderWidgetContent(
             <span className="text-2xl font-bold font-mono tracking-tight text-white tabular-nums">
               {props.formatTime(props.timerSeconds)}
             </span>
+            {props.burnTimer.warning && <span className="absolute -bottom-3 text-[9px] uppercase tracking-wider text-orange-300">Ember fading · activity to keep the timer alive</span>}
           </div>
 
           {/* Controls */}
           <div className="flex items-center justify-center gap-2 pt-1 border-t border-white/10">
             <button
-              onClick={() => props.setTimerSeconds(1500)}
+              onClick={() => props.setTimerSeconds(props.burnTimer.mode === 'pomodoro' ? props.burnTimer.focusMinutes * 60 : 25 * 60)}
               className="rounded-full border border-white/10 bg-white/5 p-2 text-zinc-300 hover:bg-white/10"
               title="Reset Timer"
             >
@@ -868,78 +872,21 @@ function renderWidgetContent(
             </button>
 
             <button
-              onClick={() => props.setTimerSeconds((s: number) => s + 300)}
+              onClick={props.stokeFuel}
               className="rounded-full border border-amber-500/40 bg-amber-500/20 px-3 py-1.5 text-xs font-semibold text-amber-300 hover:bg-amber-500/30"
             >
-              +5m Stoke
+              🔥 Stoke (+5m)
             </button>
           </div>
+          <button type="button" onClick={props.endAndArchiveSession} className="mt-2 border-t border-white/10 pt-2 text-[10px] text-zinc-500 transition-colors hover:text-orange-200">
+            ⚱️ End Session &amp; Save Digest
+          </button>
         </div>
       )
 
     // 2. Inbox Multi-Agent Feed
     case 'inbox-agents':
-      return (
-        <div className="h-full p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold">Inbox</span>
-                <span className="rounded-full bg-orange-500/20 border border-orange-500/40 px-2 py-0.5 text-[10px] font-bold text-orange-300">
-                  3 unread
-                </span>
-              </div>
-              <input
-                type="text"
-                placeholder="Search agents..."
-                className="w-28 rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-[11px] focus:outline-none placeholder-zinc-500"
-              />
-            </div>
-
-            <div className="space-y-2.5 text-xs">
-              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-2.5 hover:bg-white/[0.05] transition cursor-pointer">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-emerald-400 flex items-center gap-1">
-                    🟢 Research agent
-                  </span>
-                  <span className="text-[10px] text-zinc-500">2:40 PM</span>
-                </div>
-                <p className="mt-1 text-zinc-400 line-clamp-2">
-                  Three key topic summaries and sources ready to explore.
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-2.5 hover:bg-white/[0.05] transition cursor-pointer">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-amber-400 flex items-center gap-1">
-                    🟡 Motion & UI agent
-                  </span>
-                  <span className="text-[10px] text-zinc-500">2:32 PM</span>
-                </div>
-                <p className="mt-1 text-zinc-400 line-clamp-2">
-                  Custom curves and glass layout specs synced.
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-2.5 hover:bg-white/[0.05] transition cursor-pointer">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-sky-400 flex items-center gap-1">
-                    🔵 Solvely & Code agent
-                  </span>
-                  <span className="text-[10px] text-zinc-500">2:18 PM</span>
-                </div>
-                <p className="mt-1 text-zinc-400 line-clamp-2">
-                  Compiler check passed and doubt solution saved.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <button className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-2 text-xs font-semibold text-zinc-300 hover:bg-white/10 transition mt-2">
-            + Deploy Agent
-          </button>
-        </div>
-      )
+      return <AgentInbox {...props} />
 
     // 3. Quick Note Scratchpad
     case 'quick-note':
@@ -993,52 +940,13 @@ function renderWidgetContent(
       return (
         <div className="h-full p-5 flex flex-col justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-tr from-orange-500 to-indigo-600 flex items-center justify-center font-bold text-white text-lg shadow-md shrink-0">
-              🎵
-            </div>
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-orange-300/20 bg-orange-500/10 text-lg">🎵</div>
             <div className="truncate">
-              <p className="text-sm font-semibold truncate">{props.musicTrack}</p>
-              <p className="text-xs text-zinc-500">Campfire Focus Deck</p>
+              <p className="truncate text-sm font-semibold">Procedural Bio-Focus</p>
+              <p className="text-xs text-zinc-500">Web Audio · local only</p>
             </div>
           </div>
-
-          <div className="space-y-1">
-            <input
-              type="range"
-              min="0"
-              max="272"
-              value={props.trackProgress}
-              onChange={(e) => props.setTrackProgress(Number(e.target.value))}
-              className="w-full accent-orange-500 cursor-pointer h-1"
-            />
-            <div className="flex justify-between text-[10px] font-mono text-zinc-500">
-              <span>{props.formatTime(props.trackProgress)}</span>
-              <span>-1:45</span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between border-t border-white/10 pt-2">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => props.setIsPlayingMusic(!props.isPlayingMusic)}
-                className="rounded-full bg-white px-3 py-1 text-xs font-bold text-black hover:bg-zinc-200"
-              >
-                {props.isPlayingMusic ? '⏸ Pause' : '▶ Play'}
-              </button>
-              <button
-                onClick={() =>
-                  props.setMusicTrack(
-                    props.musicTrack.includes('Agar Agar')
-                      ? 'Campfire Crackle & Brown Noise'
-                      : 'The Visit — Agar Agar'
-                  )
-                }
-                className="text-xs text-zinc-400 hover:text-white"
-              >
-                ⏭ Next
-              </button>
-            </div>
-          </div>
+          <SoundscapeControls />
         </div>
       )
 
