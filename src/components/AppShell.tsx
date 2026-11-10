@@ -18,32 +18,6 @@ export function AppShell({ children }: AppShellProps) {
           <span className="text-sm font-semibold tracking-tight">
             🔥 Campfire
           </span>
-
-          {/* Chat / Workplace Toggle */}
-          <div className="flex items-center rounded-lg border border-white/10 bg-black/40 p-0.5 text-xs">
-            <button
-              onClick={() => setActiveWorkspaceView('chat')}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1 font-medium transition ${
-                workspaceView === 'chat'
-                  ? 'bg-white/10 text-white'
-                  : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              <MessageSquare className="h-3.5 w-3.5" />
-              Chat
-            </button>
-            <button
-              onClick={() => setActiveWorkspaceView('workplace')}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1 font-medium transition ${
-                workspaceView === 'workplace'
-                  ? 'bg-white/10 text-white'
-                  : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-              Workplace
-            </button>
-          </div>
         </div>
 
         <div className="flex items-center gap-3 text-xs">
@@ -65,13 +39,40 @@ export function AppShell({ children }: AppShellProps) {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}
         <aside className="flex w-56 flex-col border-r border-white/[0.08] bg-[#0a0a0d]/60 p-3">
+          {/* 🔥 Lit a fire */}
           <button
             onClick={openLitAFire}
-            className="flex items-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-sm font-semibold text-orange-300 transition hover:bg-orange-500/20"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-sm font-semibold text-orange-300 transition hover:bg-orange-500/20"
           >
             <Flame className="h-4 w-4 text-orange-400" />
-            🔥 Lit a fire
+            Lit a fire
           </button>
+
+          {/* Chat / Workplace Toggle — same width, below Lit a fire */}
+          <div className="mt-2 flex w-full items-center rounded-lg border border-white/10 bg-black/40 p-0.5">
+            <button
+              onClick={() => setActiveWorkspaceView('chat')}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition ${
+                workspaceView === 'chat'
+                  ? 'bg-white/10 text-white'
+                  : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              Chat
+            </button>
+            <button
+              onClick={() => setActiveWorkspaceView('workplace')}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition ${
+                workspaceView === 'workplace'
+                  ? 'bg-white/10 text-white'
+                  : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              Workplace
+            </button>
+          </div>
 
           <div className="mt-4 space-y-0.5">
             <p className="mb-1.5 px-2 text-[10px] font-mono uppercase tracking-wider text-zinc-600">
