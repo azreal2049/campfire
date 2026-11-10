@@ -475,7 +475,6 @@ export function solve(input: number[]) {
         ? {
             sparkBalance: state.sparkBalance + state.sparkContract.reward,
             sparkContract: { ...state.sparkContract, status: 'verified' as const },
-            momentum: 'success' as const,
             toastMessage: `Timer complete — Spark Contract verified · +${state.sparkContract.reward}`,
           }
         : {}),
@@ -723,8 +722,9 @@ ${state.whiteboardText || 'No whiteboard notes recorded.'}`
           }),
       activePage: 'page-workplace',
       workspaceView: 'workplace',
-      toastMessage: `⚡ Inserted portal drop into ${target === 'ide' ? 'IDE' : 'Whiteboard'}`,
+      toastMessage: null,
     }))
+    useCampfireStore.getState().showToast(`⚡ Inserted portal drop into ${target === 'ide' ? 'IDE' : 'Whiteboard'}`)
   },
   startSparkContract: (goal) => {
     const state = useCampfireStore.getState()

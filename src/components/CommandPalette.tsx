@@ -23,6 +23,7 @@ const navigation = [
   { page: 'page-workplace', label: 'Workplace' },
   { page: 'page-vault', label: 'Personal Vault' },
   { page: 'page-friends', label: 'Friends' },
+  { page: 'page-shop', label: 'Shop' },
   { page: 'page-settings', label: 'Settings' },
 ]
 

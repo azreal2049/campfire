@@ -7,6 +7,7 @@ import {
   MoreHorizontal,
   Pencil,
   Settings,
+  Store,
   UserRound,
 } from 'lucide-react'
 import { useCampfireStore } from '../store/useCampfireStore'
@@ -18,6 +19,7 @@ const destinations = [
   { id: 'page-notes', label: 'Notes / Journal', icon: Pencil },
   { id: 'page-friends', label: 'Friends', icon: UserRound },
   { id: 'page-chat', label: 'Chat / Inbox', icon: Mail },
+  { id: 'page-shop', label: 'Shop', icon: Store },
   { id: 'page-settings', label: 'Settings', icon: Settings },
 ]
 

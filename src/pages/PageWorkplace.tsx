@@ -202,9 +202,15 @@ export function PageWorkplace() {
 
   useEffect(() => {
     if (!duelOpen || duelSubmitted) return
+    let remaining = 300
     const timer = window.setInterval(() => {
-      setDuelSeconds((seconds) => Math.max(0, seconds - 1))
-      setOpponentProgress((progress) => Math.min(96, progress + Math.ceil(Math.random() * 5)))
+      remaining = Math.max(0, remaining - 1)
+      setDuelSeconds(remaining)
+      if (remaining === 0) {
+        window.clearInterval(timer)
+      } else {
+        setOpponentProgress((progress) => Math.min(96, progress + Math.ceil(Math.random() * 5)))
+      }
     }, 1000)
     return () => window.clearInterval(timer)
   }, [duelOpen, duelSubmitted])
