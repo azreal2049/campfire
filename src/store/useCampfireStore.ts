@@ -265,7 +265,6 @@ export function solve(input: number[]) {
       fileName: item.fileName ?? `${item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.${item.format ?? 'md'}`,
       format: item.format ?? 'md',
       date: 'Just now',
-      ...item,
     }
     set((state) => ({
       vaultItems: [newItem, ...state.vaultItems],
@@ -455,13 +454,13 @@ export function solve(input: number[]) {
       pendingWorkplaceTool: 'ide',
     }))
   },
-  pipeToStudy: (content) => set((state) => ({
+  pipeToStudy: (content) => set({
     whiteboardText: content,
     activePage: 'page-workplace',
     workspaceView: 'workplace',
     pendingWorkplaceTool: 'study',
     activeSessionType: 'study-group',
-  })),
+  }),
   setWhiteboardText: (whiteboardText) => set({ whiteboardText }),
   solveDoubt: (content) => {
     set((state) => ({

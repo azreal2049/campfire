@@ -13,12 +13,11 @@ import {
   VolumeX,
   Code,
   BookOpen,
-  Send,
   Compass,
   X,
 } from 'lucide-react'
 import { useCampfireStore } from '../store/useCampfireStore'
-import type { CampfireSessionType } from '../bridge/rustBridge'
+import type { AgentKind, AgentTask, CampfireSessionType } from '../bridge/rustBridge'
 import { SoundscapeControls } from '../components/SoundscapeControls'
 
 type SessionMode =
@@ -782,9 +781,16 @@ export function PageWorkplace() {
   )
 }
 
-function AgentInbox(props: any) {
-  const unreadCount = props.agentTasks.filter((task: { read: boolean }) => !task.read).length
-  const taskKinds = [
+interface AgentInboxProps {
+  agentTasks: AgentTask[]
+  dispatchAgent: (kind: AgentKind) => Promise<void>
+  markAgentRead: (id: string) => void
+  saveAgentOutput: (id: string) => void
+}
+
+function AgentInbox(props: AgentInboxProps) {
+  const unreadCount = props.agentTasks.filter((task) => !task.read).length
+  const taskKinds: Array<{ kind: AgentKind; label: string }> = [
     { kind: 'study', label: '🧬 Study & Flashcards' },
     { kind: 'code-audit', label: '💻 Code Audit & Tests' },
     { kind: 'creator', label: '🎬 Creator Storyboard' },
@@ -808,7 +814,7 @@ function AgentInbox(props: any) {
       </div>
       <div className="min-h-0 flex-1 space-y-2 overflow-auto text-xs">
         {props.agentTasks.length === 0 && <p className="rounded border border-white/[0.08] p-3 text-zinc-500">Agent results and study packs appear here.</p>}
-        {props.agentTasks.slice(0, 3).map((task: { id: string; title: string; createdAt: string; status: string; output: string; read: boolean }) => (
+        {props.agentTasks.slice(0, 3).map((task) => (
           <article key={task.id} onClick={() => props.markAgentRead(task.id)} className={`rounded-xl border p-2.5 ${task.read ? 'border-white/[0.08] bg-white/[0.02]' : 'border-sky-500/20 bg-sky-500/[0.04]'}`}>
             <div className="flex items-center justify-between gap-2">
               <span className="font-semibold text-zinc-200">{task.title}</span>
@@ -826,9 +832,10 @@ function AgentInbox(props: any) {
 // ── RENDERER FOR THE 12 WORKPLACE WIDGETS ──
 function renderWidgetContent(
   id: string,
-  theme: 'obsidian' | 'daylight',
+  _theme: 'obsidian' | 'daylight',
   props: any
 ) {
+  const isDark = _theme === 'obsidian'
   switch (id) {
     // 1. Focus Timer
     case 'focus-timer':
