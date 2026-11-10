@@ -8,6 +8,8 @@
     "autosync": "node scripts/autosync.mjs",
     "autosync:install": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-autosync.ps1",
     "autosync:uninstall": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/uninstall-autosync.ps1",
+    "discord-updates:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/discord-updates.ps1 -Mode Setup",
+    "discord-updates": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/discord-updates.ps1 -Mode Send",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"

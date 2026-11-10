@@ -119,6 +119,8 @@ npm run dev       # Start the Vite development server
 npm run autosync  # Run one safe push check for committed main changes
 npm run autosync:install   # Windows: schedule checks every 24 hours
 npm run autosync:uninstall # Windows: remove the scheduled task
+npm run discord-updates:setup # Windows: save a #commits webhook once
+npm run discord-updates       # Send a polished on-demand #commits digest
 npm run build     # TypeScript project build and production Vite build
 npm run lint      # Run Oxlint
 npm run preview   # Preview the production build locally
@@ -137,6 +139,8 @@ The UI is currently local-first, so Git is the source-control collaboration path
 On Windows, `npm run autosync:install` registers a per-user Task Scheduler task that checks once every 24 hours and pushes **already-committed changes on `main` only** to `origin/main`. It does not stage files, create commits, or push other branches. If the remote has commits missing locally, the task skips the push and asks you to reconcile the branch manually. The task uses the current user's Git credentials and runs while that user is signed in. Use `npm run autosync:uninstall` to remove it. `npm run autosync` runs a single check immediately.
 
 Review and commit changes normally; uncommitted and untracked files are never uploaded by autosync. Do not commit secrets or unfinished work to `main`. VS Code auto-fetch is enabled independently of this push schedule.
+
+For on-demand Discord project updates, run `npm run discord-updates:setup` once in Windows Terminal and paste a newly rotated webhook for `#commits` when prompted. The setup verifies the webhook's channel and stores its URL encrypted for the current Windows account under `%LOCALAPPDATA%`, outside the repository. Later, run `npm run discord-updates` to post a styled summary of new committed changes; commits changing at least three files or 100 lines are included. No scheduled or automatic messages are sent. Re-running setup to replace a webhook preserves the previous update position; a first-time setup starts from the current commit. Rotate the webhook once if it was exposed, then keep using the replacement until it needs rotation again.
 
 ## Current boundaries
 
