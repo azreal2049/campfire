@@ -80,6 +80,7 @@ interface CampfireStore {
   squadActivity: string
   soundscapePreset: 'campfire' | 'brown' | 'rain' | 'gamma'
   soundscapeVolume: number
+  soundscapePlaying: boolean
   stokePulse: boolean
   setActivePage: (page: string) => void
   setActiveWorkspaceView: (view: 'chat' | 'workplace') => void
@@ -104,6 +105,7 @@ interface CampfireStore {
   setSessionType: (sessionType: CampfireSessionType) => void
   setBurnMode: (mode: BurnTimerState['mode']) => void
   setBurnTimerRunning: (running: boolean) => void
+  setBurnTimerSeconds: (seconds: number) => void
   tickBurnTimer: () => void
   registerActivity: () => void
   stokeFuel: () => void
@@ -122,6 +124,8 @@ interface CampfireStore {
   saveAgentOutput: (id: string) => void
   endAndArchiveSession: () => void
   setSoundscape: (preset: CampfireStore['soundscapePreset']) => void
+  toggleFocusSoundscape: () => void
+  setSoundscapePlaying: (playing: boolean) => void
   setSoundscapeVolume: (volume: number) => void
   syncSquadView: (member: string) => void
 }
@@ -230,6 +234,7 @@ export function solve(input: number[]) {
   squadActivity: '',
   soundscapePreset: 'campfire',
   soundscapeVolume: 0.18,
+  soundscapePlaying: false,
   stokePulse: false,
 
   setActivePage: (page) => set({
@@ -371,6 +376,9 @@ export function solve(input: number[]) {
   })),
   setBurnTimerRunning: (running) => set((state) => ({
     burnTimer: { ...state.burnTimer, running, lastActivityAt: Date.now() },
+  })),
+  setBurnTimerSeconds: (secondsRemaining) => set((state) => ({
+    burnTimer: { ...state.burnTimer, secondsRemaining: Math.max(0, secondsRemaining) },
   })),
   tickBurnTimer: () => set((state) => {
     if (!state.burnTimer.running) return state
@@ -549,6 +557,11 @@ ${state.whiteboardText || 'No whiteboard notes recorded.'}`
     }))
   },
   setSoundscape: (soundscapePreset) => set({ soundscapePreset }),
+  toggleFocusSoundscape: () => set((state) => ({
+    soundscapePreset: state.soundscapePreset === 'gamma' ? 'brown' : 'gamma',
+    soundscapePlaying: true,
+  })),
+  setSoundscapePlaying: (soundscapePlaying) => set({ soundscapePlaying }),
   setSoundscapeVolume: (soundscapeVolume) => set({ soundscapeVolume }),
   syncSquadView: (member) => {
     const target = member === 'Nova' ? 'coders-developers' : member === 'Kai' ? 'study-group' : 'silent-coworking'
@@ -584,5 +597,6 @@ ${state.whiteboardText || 'No whiteboard notes recorded.'}`
     agentTasks: state.agentTasks,
     soundscapePreset: state.soundscapePreset,
     soundscapeVolume: state.soundscapeVolume,
+    vaultItems: state.vaultItems,
   }),
 }))

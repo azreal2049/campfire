@@ -1,8 +1,19 @@
 import { useCampfireStore } from '../store/useCampfireStore'
-import { Folder, Search, ArrowUpRight, Code, BookOpen, Sparkles, Trash2 } from 'lucide-react'
+import { Folder, Search, ArrowUpRight, Download } from 'lucide-react'
 
 export function PageVault() {
   const vaultItems = useCampfireStore((state) => state.vaultItems)
+  const restoreVaultItem = useCampfireStore((state) => state.restoreVaultItem)
+
+  const downloadItem = (title: string, fileName: string, format: string, content: string) => {
+    const blob = new Blob([content], { type: format === 'json' ? 'application/json' : 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = fileName || `${title.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.${format || 'txt'}`
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="min-h-[calc(100vh-48px)] bg-[#070709] p-8 text-white select-none">
@@ -45,9 +56,17 @@ export function PageVault() {
                 </p>
               )}
               <div className="mt-4 flex items-center justify-between pt-2 border-t border-white/[0.06]">
-                <button className="flex items-center gap-1.5 text-xs font-medium text-orange-400 hover:text-orange-300">
-                  <span>Re-open in Workplace</span>
+                <button type="button" onClick={() => restoreVaultItem(item.id)} className="flex items-center gap-1.5 text-xs font-medium text-orange-400 hover:text-orange-300">
+                  <span>↗ Restore in Workplace</span>
                   <ArrowUpRight className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => downloadItem(item.title, item.fileName, item.format, item.content)}
+                  className="flex items-center gap-1.5 text-xs font-medium text-zinc-400 hover:text-white"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Download File
                 </button>
               </div>
             </div>

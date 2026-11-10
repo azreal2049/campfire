@@ -61,8 +61,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const setSessionType = useCampfireStore((state) => state.setSessionType)
   const stokeFuel = useCampfireStore((state) => state.stokeFuel)
   const saveWorkspaceSnapshot = useCampfireStore((state) => state.saveWorkspaceSnapshot)
-  const setSoundscape = useCampfireStore((state) => state.setSoundscape)
-  const soundscapePreset = useCampfireStore((state) => state.soundscapePreset)
+  const toggleFocusSoundscape = useCampfireStore((state) => state.toggleFocusSoundscape)
   const setBlueprintMode = useCampfireStore((state) => state.setBlueprintMode)
   const dispatchAgent = useCampfireStore((state) => state.dispatchAgent)
   const [query, setQuery] = useState('')
@@ -109,7 +108,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       label: '🔊 Toggle Brown Noise / 40Hz Gamma Focus',
       detail: 'Switch focus sound preset',
       group: 'Quick commands',
-      run: () => setSoundscape(soundscapePreset === 'gamma' ? 'brown' : 'gamma'),
+      run: toggleFocusSoundscape,
     },
     {
       id: 'blueprint',
@@ -118,7 +117,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       group: 'Quick commands',
       run: () => setBlueprintMode(!useCampfireStore.getState().blueprintMode),
     },
-  ], [dispatchAgent, saveWorkspaceSnapshot, setActivePage, setBlueprintMode, setSessionType, setSoundscape, soundscapePreset, stokeFuel])
+  ], [dispatchAgent, saveWorkspaceSnapshot, setActivePage, setBlueprintMode, setSessionType, stokeFuel, toggleFocusSoundscape])
 
   const filtered = commands.filter((command) =>
     fuzzyMatch(query, `${command.label} ${command.group} ${command.detail}`),
