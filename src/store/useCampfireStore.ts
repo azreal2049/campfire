@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { createJSONStorage, persist } from 'zustand/middleware'
 
 export interface VaultItem {
   id: string
@@ -14,6 +15,8 @@ interface ConnectedAccount {
   subtitle: string
   status: string
   active: boolean
+  details: string
+  expanded: boolean
 }
 
 interface AppIntegration {
@@ -21,6 +24,16 @@ interface AppIntegration {
   name: string
   description: string
   installed: boolean
+}
+
+export interface SettingsPreferences {
+  defaultMode: 'countdown' | 'deadman' | 'pomodoro'
+  burnTimerMinutes: number
+  soundscape: 'off' | 'rain' | 'fire' | 'cafe'
+  unreadMentionAlerts: boolean
+  peerRadarVisible: boolean
+  vaultAutoSave: boolean
+  ipcTelemetry: boolean
 }
 
 interface CampfireStore {
@@ -32,6 +45,9 @@ interface CampfireStore {
   // Settings
   displayName: string
   email: string
+  handle: string
+  avatarUrl: string | null
+  preferences: SettingsPreferences
   accounts: ConnectedAccount[]
   apps: AppIntegration[]
   setActivePage: (page: string) => void
@@ -41,12 +57,19 @@ interface CampfireStore {
   clearToast: () => void
   setDisplayName: (name: string) => void
   setEmail: (email: string) => void
+  setHandle: (handle: string) => void
+  setAvatarUrl: (avatarUrl: string | null) => void
+  setPreference: <K extends keyof SettingsPreferences>(key: K, value: SettingsPreferences[K]) => void
   toggleAccount: (id: string) => void
+  toggleAccountExpanded: (id: string) => void
   refreshAccount: (id: string) => void
+  removeAccount: (id: string) => void
+  addAccount: (account: Omit<ConnectedAccount, 'id' | 'active' | 'expanded'>) => void
   toggleApp: (id: string) => void
+  showToast: (message: string) => void
 }
 
-export const useCampfireStore = create<CampfireStore>((set, get) => ({
+export const useCampfireStore = create<CampfireStore>()(persist((set) => ({
   activePage: 'page-home',
   isAuthenticated: true,
   workspaceView: 'chat',
@@ -70,21 +93,45 @@ export const useCampfireStore = create<CampfireStore>((set, get) => ({
 
   displayName: 'You',
   email: 'you@campfire.dev',
+  handle: '@you',
+  avatarUrl: null,
+  preferences: {
+    defaultMode: 'countdown',
+    burnTimerMinutes: 25,
+    soundscape: 'off',
+    unreadMentionAlerts: true,
+    peerRadarVisible: true,
+    vaultAutoSave: true,
+    ipcTelemetry: false,
+  },
 
   accounts: [
     {
-      id: 'acc-1',
+      id: 'freellm',
       name: 'Local FreeLLM & Workspace Engine',
       subtitle: 'Updated about 21 hours ago via Campfire Bridge',
       status: 'ACTIVE · 0ms',
       active: true,
+      details: 'Auto Model Route (127.0.0.1:31415)',
+      expanded: true,
     },
     {
-      id: 'acc-2',
-      name: 'Auto Model Route (127.0.0.1:31415)',
-      subtitle: 'Personal Vault Auto-Sync',
+      id: 'piston',
+      name: 'Piston Runner',
+      subtitle: 'Code execution engine',
+      status: 'READY · 0ms',
+      active: true,
+      details: 'Run code in an isolated Piston environment',
+      expanded: false,
+    },
+    {
+      id: 'github-sync',
+      name: 'GitHub Sync',
+      subtitle: 'Repository and workspace connection',
       status: '196,435 tokens',
       active: true,
+      details: 'Personal Vault Auto-Sync',
+      expanded: false,
     },
   ],
 
@@ -124,8 +171,19 @@ export const useCampfireStore = create<CampfireStore>((set, get) => ({
   },
   setEmail: (email) => {
     set({ email })
-    set({ toastMessage: 'Settings saved' })
-    setTimeout(() => set({ toastMessage: null }), 2500)
+    useCampfireStore.getState().showToast('Settings saved')
+  },
+  setHandle: (handle) => {
+    set({ handle })
+    useCampfireStore.getState().showToast('Settings saved')
+  },
+  setAvatarUrl: (avatarUrl) => {
+    set({ avatarUrl })
+    useCampfireStore.getState().showToast('Settings saved')
+  },
+  setPreference: (key, value) => {
+    set((state) => ({ preferences: { ...state.preferences, [key]: value } }))
+    useCampfireStore.getState().showToast('Settings saved')
   },
   toggleAccount: (id) => {
     set((state) => ({
@@ -133,15 +191,37 @@ export const useCampfireStore = create<CampfireStore>((set, get) => ({
         a.id === id ? { ...a, active: !a.active } : a
       ),
     }))
+    useCampfireStore.getState().showToast('Settings saved')
+  },
+  toggleAccountExpanded: (id) => {
+    set((state) => ({
+      accounts: state.accounts.map((a) =>
+        a.id === id ? { ...a, expanded: !a.expanded } : a
+      ),
+    }))
   },
   refreshAccount: (id) => {
     set((state) => ({
       accounts: state.accounts.map((a) =>
         a.id === id
-          ? { ...a, subtitle: 'Updated just now', status: a.status }
+          ? { ...a, subtitle: 'Updated just now' }
           : a
       ),
     }))
+    useCampfireStore.getState().showToast('Connection refreshed')
+  },
+  removeAccount: (id) => {
+    set((state) => ({ accounts: state.accounts.filter((account) => account.id !== id) }))
+    useCampfireStore.getState().showToast('Connection removed')
+  },
+  addAccount: (account) => {
+    set((state) => ({
+      accounts: [
+        ...state.accounts,
+        { ...account, id: `connection-${Date.now()}`, active: true, expanded: true },
+      ],
+    }))
+    useCampfireStore.getState().showToast('Connection added')
   },
   toggleApp: (id) => {
     set((state) => ({
@@ -149,5 +229,26 @@ export const useCampfireStore = create<CampfireStore>((set, get) => ({
         a.id === id ? { ...a, installed: !a.installed } : a
       ),
     }))
+    useCampfireStore.getState().showToast('Settings saved')
   },
+  showToast: (message) => {
+    set({ toastMessage: message })
+    setTimeout(() => {
+      if (useCampfireStore.getState().toastMessage === message) {
+        set({ toastMessage: null })
+      }
+    }, 2500)
+  },
+}), {
+  name: 'campfire-settings',
+  storage: createJSONStorage(() => localStorage),
+  partialize: (state) => ({
+    displayName: state.displayName,
+    email: state.email,
+    handle: state.handle,
+    avatarUrl: state.avatarUrl,
+    preferences: state.preferences,
+    accounts: state.accounts,
+    apps: state.apps,
+  }),
 }))

@@ -5,6 +5,7 @@ const pages = [
   { id: 'page-chat', label: 'Chat' },
   { id: 'page-workplace', label: 'Workplace' },
   { id: 'page-vault', label: 'Vault' },
+  { id: 'page-settings', label: 'Settings' },
 ]
 
 export function DevPageSwitcher() {

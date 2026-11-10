@@ -1,5 +1,5 @@
 import { useCampfireStore } from '../store/useCampfireStore'
-import { Flame, MessageSquare, LayoutGrid } from 'lucide-react'
+import { Flame, MessageSquare, LayoutGrid, Settings } from 'lucide-react'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -8,6 +8,7 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   const workspaceView = useCampfireStore((state) => state.workspaceView)
   const setActiveWorkspaceView = useCampfireStore((state) => state.setActiveWorkspaceView)
+  const setActivePage = useCampfireStore((state) => state.setActivePage)
   const openLitAFire = useCampfireStore((state) => state.openLitAFire)
 
   return (
@@ -15,6 +16,14 @@ export function AppShell({ children }: AppShellProps) {
       {/* ── Top Bar ── */}
       <header className="flex h-12 items-center justify-between border-b border-white/[0.08] bg-[#0a0a0d]/80 px-4 backdrop-blur-md">
         <span className="text-sm font-semibold tracking-tight">🔥 Campfire</span>
+        <button
+          type="button"
+          onClick={() => setActivePage('page-settings')}
+          aria-label="Open settings"
+          className="flex h-8 w-8 items-center justify-center text-zinc-500 transition-colors hover:text-white"
+        >
+          <Settings className="h-4 w-4" />
+        </button>
       </header>
 
       {/* ── Body: Left Sidebar + Main Content ── */}

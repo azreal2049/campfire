@@ -5,6 +5,7 @@ import { PageHome } from './pages/PageHome'
 import { PageChat } from './pages/PageChat'
 import { PageWorkplace } from './pages/PageWorkplace'
 import { PageVault } from './pages/PageVault'
+import { PageSettings } from './pages/PageSettings'
 
 export default function App() {
   const activePage = useCampfireStore((state) => state.activePage)
@@ -17,6 +18,8 @@ export default function App() {
         return <PageWorkplace />
       case 'page-vault':
         return <PageVault />
+      case 'page-settings':
+        return <PageSettings />
       default:
         return <PageHome />
     }
